@@ -69,22 +69,16 @@
   /* --- Neutrals (black / white / gray) --- */
   --background: #ffffff;
   --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
   --muted-foreground: #737373;
   --border: #e0e0e0;
   --input: #e6e6e6;
-
-  /* Scoped component variables in light mode (dark contradictory colors) */
-  --card: #262626;
-  --card-foreground: #ebebeb;
-  --card-muted-foreground: #a6a6a6;
-  --card-border: #404040;
-
-  --popover: #262626;
-  --popover-foreground: #ebebeb;
-
-  --secondary: #333333;
-  --secondary-foreground: #ebebeb;
-  --muted: #2e2e2e;
 
   /* --- Blue scale: the one brand color, every shade of it ---
      600 is anchored to the original brand blue used everywhere already. */
@@ -122,13 +116,13 @@
   --chart-5: var(--blue-900);
 
   /* --- Sidebar: neutral surface, blue accent --- */
-  --sidebar: #1a1a1a;
-  --sidebar-foreground: #d9d9d9;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #404040;
   --sidebar-primary: var(--blue-600);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #333333;
-  --sidebar-accent-foreground: #f2f2f2;
-  --sidebar-border: #383838;
+  --sidebar-accent: var(--blue-50);
+  --sidebar-accent-foreground: var(--blue-700);
+  --sidebar-border: #e6e6e6;
   --sidebar-ring: var(--blue-600);
 
   --font-sans: Geist, ui-sans-serif, sans-serif, system-ui;
@@ -157,22 +151,16 @@
   /* --- Neutrals (black / white / gray) --- */
   --background: #1f1f1f;
   --foreground: #ebebeb;
+  --card: #262626;
+  --card-foreground: #ebebeb;
+  --popover: #262626;
+  --popover-foreground: #ebebeb;
+  --secondary: #333333;
+  --secondary-foreground: #ebebeb;
+  --muted: #2e2e2e;
   --muted-foreground: #a6a6a6;
   --border: #404040;
   --input: #404040;
-
-  /* Scoped component variables in dark mode (light contradictory colors) */
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --card-muted-foreground: #737373;
-  --card-border: #e0e0e0;
-
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-
-  --secondary: #f4f4f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
 
   /* Same blue scale as :root — colors don't change between modes, only
      which step of the scale each token points to. */
@@ -210,13 +198,13 @@
   --chart-5: var(--blue-200);
 
   /* --- Sidebar --- */
-  --sidebar: #fafafa;
-  --sidebar-foreground: #404040;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #d9d9d9;
   --sidebar-primary: var(--blue-300);
   --sidebar-primary-foreground: #001833;
-  --sidebar-accent: var(--blue-50);
-  --sidebar-accent-foreground: var(--blue-700);
-  --sidebar-border: #e6e6e6;
+  --sidebar-accent: #333333;
+  --sidebar-accent-foreground: #f2f2f2;
+  --sidebar-border: #383838;
   --sidebar-ring: var(--blue-300);
 
   --font-sans: Geist, ui-sans-serif, sans-serif, system-ui;
@@ -314,18 +302,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-
-  /* Scope component variables to adapt text and border colors automatically inside inverted panels */
-  .bg-card {
-    --foreground: var(--card-foreground);
-    --muted-foreground: var(--card-muted-foreground);
-    --border: var(--card-border);
-  }
-
-  aside, .bg-sidebar, [class*="bg-sidebar"] {
-    --foreground: var(--sidebar-foreground);
-    --border: var(--sidebar-border);
   }
   /* Every clickable control gets a pointer cursor — buttons (including
      icon-only ones), links, selects/dropdowns and their items. Disabled
