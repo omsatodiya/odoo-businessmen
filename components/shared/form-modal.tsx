@@ -44,10 +44,10 @@ export function FormModal({
         <form className="space-y-4" onSubmit={onSubmit}>
           {children}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="cursor-pointer">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="cursor-pointer">
               {isSubmitting ? "Saving..." : submitLabel}
             </Button>
           </DialogFooter>

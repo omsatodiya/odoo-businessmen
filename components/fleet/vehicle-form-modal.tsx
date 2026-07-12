@@ -130,15 +130,15 @@ export function VehicleFormModal({ open, onOpenChange, vehicle }: VehicleFormMod
             onValueChange={(val) => setType(val as VehicleType)}
             disabled={isSubmitting}
           >
-            <SelectTrigger id="type" className="w-full">
+            <SelectTrigger id="type" className="w-full cursor-pointer">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="VAN">Van</SelectItem>
-              <SelectItem value="TRUCK">Truck</SelectItem>
-              <SelectItem value="MINI">Mini</SelectItem>
-              <SelectItem value="BUS">Bus</SelectItem>
-              <SelectItem value="TRAILER">Trailer</SelectItem>
+              <SelectItem value="VAN" className="cursor-pointer">Van</SelectItem>
+              <SelectItem value="TRUCK" className="cursor-pointer">Truck</SelectItem>
+              <SelectItem value="MINI" className="cursor-pointer">Mini</SelectItem>
+              <SelectItem value="BUS" className="cursor-pointer">Bus</SelectItem>
+              <SelectItem value="TRAILER" className="cursor-pointer">Trailer</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -201,14 +201,14 @@ export function VehicleFormModal({ open, onOpenChange, vehicle }: VehicleFormMod
               onValueChange={(val) => setStatus(val as VehicleStatus)}
               disabled={isSubmitting}
             >
-              <SelectTrigger id="status" className="w-full">
+              <SelectTrigger id="status" className="w-full cursor-pointer">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="AVAILABLE">Available</SelectItem>
-                <SelectItem value="ON_TRIP">On Trip</SelectItem>
-                <SelectItem value="IN_SHOP">In Shop</SelectItem>
-                <SelectItem value="RETIRED">Retired</SelectItem>
+                <SelectItem value="AVAILABLE" className="cursor-pointer">Available</SelectItem>
+                <SelectItem value="ON_TRIP" className="cursor-pointer">On Trip</SelectItem>
+                <SelectItem value="IN_SHOP" className="cursor-pointer">In Shop</SelectItem>
+                <SelectItem value="RETIRED" className="cursor-pointer">Retired</SelectItem>
               </SelectContent>
             </Select>
           </div>

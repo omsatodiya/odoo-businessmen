@@ -303,18 +303,30 @@
   body {
     @apply bg-background text-foreground;
   }
-  button,
-  [role="button"],
+  /* Every clickable control gets a pointer cursor — buttons (including
+     icon-only ones), links, selects/dropdowns and their items. Disabled
+     controls are excluded below so they correctly show not-allowed instead
+     of a misleading pointer. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
   a,
-  select,
-  input[type="submit"],
-  input[type="button"],
+  select:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
   [role="menuitem"],
   [role="option"],
   [role^="menuitem"],
   [data-slot="select-item"],
   [data-slot^="dropdown-menu-"] {
     cursor: pointer !important;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  select:disabled,
+  input[type="submit"]:disabled,
+  input[type="button"]:disabled {
+    cursor: not-allowed !important;
   }
 }
 

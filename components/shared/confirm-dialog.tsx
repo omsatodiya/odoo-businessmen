@@ -39,8 +39,8 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction variant={variant} onClick={onConfirm} disabled={isLoading}>
+          <AlertDialogCancel disabled={isLoading} className="cursor-pointer">{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction variant={variant} onClick={onConfirm} disabled={isLoading} className="cursor-pointer">
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
