@@ -47,14 +47,19 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
   }
 }
 
-export async function setSessionCookie(token: string) {
+/**
+ * `persistent=false` omits maxAge so the cookie is a browser-session cookie
+ * (cleared on browser close) while the JWT itself still carries the normal
+ * 7-day expiry server-side.
+ */
+export async function setSessionCookie(token: string, persistent = true) {
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    ...(persistent ? { maxAge: SESSION_TTL_SECONDS } : {}),
   });
 }
 

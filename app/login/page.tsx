@@ -1,64 +1,66 @@
-import Link from "next/link"
-import { KeyRound, ShieldCheck, Sparkles } from "lucide-react"
+import { redirect } from "next/navigation";
 
-import { AuthShell } from "@/components/pages/auth-shell"
-import { AuthForm } from "@/components/pages/auth-form"
-import { Card, CardContent } from "@/components/ui/card"
+import { LoginForm } from "@/components/auth/login-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSession } from "@/lib/session";
 
-export default function LoginPage() {
+const ROLES = ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"];
+
+export default async function LoginPage() {
+  const session = await getSession();
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
-    <main>
-      <AuthShell
-        badge="Secure access"
-        eyebrow="Authentication"
-        title="Return to your workspace"
-        description="This route is ready for a real auth provider. The current implementation keeps the page fast, accessible, and explicit about the missing backend."
-        footerHref="/"
-        footerLabel="Back to home"
-      >
-        <AuthForm mode="login" />
-      </AuthShell>
+    <main className="grid min-h-screen lg:grid-cols-2">
+      <section className="hidden flex-col justify-between bg-muted/40 p-10 lg:flex">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 font-semibold text-primary">
+            T
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">TransitOps</p>
+            <p className="text-xs text-muted-foreground">Smart Transport Operations Platform</p>
+          </div>
+        </div>
 
-      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-border/70 bg-card/80 shadow-sm">
-            <CardContent className="flex items-start gap-3 px-4 py-4">
-              <div className="flex size-10 items-center justify-center border border-border bg-primary/10 text-primary">
-                <KeyRound className="size-4" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Prepared for auth providers</p>
-                <p className="text-sm text-muted-foreground">Wire in NextAuth, Clerk, or a custom route handler later.</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 bg-card/80 shadow-sm">
-            <CardContent className="flex items-start gap-3 px-4 py-4">
-              <div className="flex size-10 items-center justify-center border border-border bg-primary/10 text-primary">
-                <ShieldCheck className="size-4" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Server-first security</p>
-                <p className="text-sm text-muted-foreground">No token handling is done in the client-only demo state.</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 bg-card/80 shadow-sm">
-            <CardContent className="flex items-start gap-3 px-4 py-4">
-              <div className="flex size-10 items-center justify-center border border-border bg-primary/10 text-primary">
-                <Sparkles className="size-4" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Minimal latency overhead</p>
-                <p className="text-sm text-muted-foreground">The route stays mostly server-rendered until real auth is added.</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-foreground">One login, four roles:</p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {ROLES.map((role) => (
+              <li key={role} className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-primary" />
+                {role}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          New here? <Link href="/signup" className="text-primary hover:underline">Create an account</Link>
-        </div>
+
+        <p className="text-xs text-muted-foreground">
+          TransitOps © {new Date().getFullYear()} · RBAC-enabled
+        </p>
+      </section>
+
+      <section className="flex items-center justify-center p-6 sm:p-10">
+        <Card className="w-full max-w-md border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Sign in to your account</CardTitle>
+            <CardDescription>Enter your credentials to continue</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <LoginForm />
+
+            <div className="space-y-1.5 border-t border-border pt-4 text-xs text-muted-foreground">
+              <p>Access is scoped by role after login:</p>
+              <p>Fleet Manager → Fleet, Maintenance</p>
+              <p>Dispatcher → Dashboard, Trips</p>
+              <p>Safety Officer → Drivers, Compliance</p>
+              <p>Financial Analyst → Fuel &amp; Expenses, Analytics</p>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </main>
-  )
+  );
 }
