@@ -2,4 +2,6 @@
 // export here as it's built (see plan.md §5 for the slice shape convention).
 export { useUiStore } from "@/store/ui-slice";
 export { useDriverStore } from "@/store/driver-slice";
+export { useFuelExpenseStore } from "@/store/fuel-expense-slice";
+
 
