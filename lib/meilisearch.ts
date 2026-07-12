@@ -1,7 +1,3 @@
-import type { User } from "@prisma/client";
-
-import type { UserSearchableField } from "@/types/user-query-types";
-
 type MeiliSearchHit = {
   id: string;
 };
@@ -14,8 +10,6 @@ type MeiliSearchResponse = {
 type MeiliTaskResponse = {
   taskUid?: number;
 };
-
-const DEFAULT_USERS_INDEX = "users";
 
 function getHost() {
   return process.env.MEILISEARCH_HOST?.replace(/\/$/, "");
@@ -31,23 +25,6 @@ function getHeaders() {
   }
 
   return headers;
-}
-
-function usersIndex() {
-  return process.env.MEILISEARCH_USERS_INDEX ?? DEFAULT_USERS_INDEX;
-}
-
-function toSearchableUser(user: User) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    location: user.location,
-    gender: user.gender,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
-  };
 }
 
 async function meiliFetch<T>(path: string, init?: RequestInit): Promise<T | null> {
@@ -70,54 +47,66 @@ async function meiliFetch<T>(path: string, init?: RequestInit): Promise<T | null
   return (await response.json()) as T;
 }
 
-export async function configureUsersSearchIndex() {
-  const index = usersIndex();
-  await meiliFetch<MeiliTaskResponse>(`/indexes/${index}/settings`, {
+/**
+ * Configure searchable/filterable/sortable attributes for an index.
+ * Call once per index (e.g. on seed or first upsert) — safe to call repeatedly.
+ */
+export async function configureIndex(
+  index: string,
+  settings: {
+    searchableAttributes?: string[];
+    filterableAttributes?: string[];
+    sortableAttributes?: string[];
+  }
+) {
+  return meiliFetch<MeiliTaskResponse>(`/indexes/${index}/settings`, {
     method: "PATCH",
     body: JSON.stringify({
-      searchableAttributes: ["name", "email", "location", "role", "gender"],
-      filterableAttributes: ["role", "gender"],
-      sortableAttributes: ["createdAt", "name", "email", "role"],
       typoTolerance: { enabled: true },
+      ...settings,
     }),
   });
 }
 
-export async function upsertUsersInSearch(users: User[]) {
-  if (users.length === 0) return;
+/** Upsert documents into an index. Each document must have an `id` field. */
+export async function upsertDocuments<T extends { id: string }>(
+  index: string,
+  documents: T[]
+) {
+  if (documents.length === 0) return null;
 
-  await configureUsersSearchIndex();
-  await meiliFetch<MeiliTaskResponse>(`/indexes/${usersIndex()}/documents`, {
+  return meiliFetch<MeiliTaskResponse>(`/indexes/${index}/documents`, {
     method: "POST",
-    body: JSON.stringify(users.map(toSearchableUser)),
+    body: JSON.stringify(documents),
   });
 }
 
-export async function deleteUserFromSearch(id: string) {
-  await meiliFetch<MeiliTaskResponse>(`/indexes/${usersIndex()}/documents/${id}`, {
+export async function deleteDocument(index: string, id: string) {
+  return meiliFetch<MeiliTaskResponse>(`/indexes/${index}/documents/${id}`, {
     method: "DELETE",
   });
 }
 
-export async function searchUserIds(
+/**
+ * Typo-tolerant search returning matching document ids, or `null` if
+ * Meilisearch is unreachable/unconfigured — callers must fall back to a
+ * Postgres ILIKE query in that case.
+ */
+export async function searchIds(
+  index: string,
   query: string,
-  field: UserSearchableField,
-  limit: number
+  opts?: { limit?: number; searchableFields?: string[] }
 ): Promise<string[] | null> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return null;
 
-  const attributesToSearchOn =
-    field === "all" ? undefined : [field];
-
-  const response = await meiliFetch<MeiliSearchResponse>(`/indexes/${usersIndex()}/search`, {
+  const response = await meiliFetch<MeiliSearchResponse>(`/indexes/${index}/search`, {
     method: "POST",
     body: JSON.stringify({
       q: trimmedQuery,
-      limit,
-      attributesToSearchOn,
+      limit: opts?.limit ?? 20,
+      attributesToSearchOn: opts?.searchableFields,
       matchingStrategy: "all",
-      showRankingScore: true,
     }),
   });
 
