@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, Search, Bell, LayoutGrid, Sun, Moon } from "lucide-react";
+import { Menu, Search, LayoutGrid, Sun, Moon } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/layout/user-menu";
+import { NotificationsMenu } from "@/components/layout/notifications-menu";
 import { useUiStore } from "@/store/ui-slice";
 import { CommandMenu } from "@/components/layout/command-menu";
 import type { Access, Resource } from "@/lib/rbac";
@@ -63,9 +64,7 @@ export function AppTopbar({
           )}
         </Button>
 
-        <Button variant="ghost" size="icon" className="size-8 cursor-pointer text-muted-foreground hover:text-foreground" title="Notifications">
-          <Bell className="size-4" />
-        </Button>
+        <NotificationsMenu />
         <Button variant="ghost" size="icon" className="size-8 cursor-pointer text-muted-foreground hover:text-foreground" title="Apps">
           <LayoutGrid className="size-4" />
         </Button>
