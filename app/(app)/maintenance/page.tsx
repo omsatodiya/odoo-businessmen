@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { can, getRbacMatrix } from "@/lib/rbac";
-import { PageHeader } from "@/components/shared/page-header";
-import { MaintenanceForm } from "@/components/maintenance/maintenance-form";
 import { MaintenanceLogTable } from "@/components/maintenance/maintenance-log-table";
 
 export default async function MaintenancePage() {
@@ -29,27 +27,7 @@ export default async function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Vehicle Maintenance"
-        description="Track and manage vehicle service history and shop status."
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {isFullAccess ? (
-          <>
-            <div className="lg:col-span-1">
-              <MaintenanceForm />
-            </div>
-            <div className="lg:col-span-2">
-              <MaintenanceLogTable isFullAccess={isFullAccess} />
-            </div>
-          </>
-        ) : (
-          <div className="lg:col-span-3">
-            <MaintenanceLogTable isFullAccess={isFullAccess} />
-          </div>
-        )}
-      </div>
+      <MaintenanceLogTable isFullAccess={isFullAccess} />
     </div>
   );
 }
