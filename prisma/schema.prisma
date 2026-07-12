@@ -104,6 +104,7 @@ model Vehicle {
 model Driver {
   id              String          @id @default(cuid())
   name            String
+  email           String?
   licenseNo       String          @unique
   licenseCategory LicenseCategory
   licenseExpiry   DateTime

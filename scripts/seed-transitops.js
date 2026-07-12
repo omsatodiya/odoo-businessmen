@@ -69,11 +69,11 @@ async function seedVehicles() {
 async function seedDrivers() {
   const drivers = await prisma.$transaction(
     [
-      { name: "Alex", licenseNo: "DL-88213", licenseCategory: "LMV", licenseExpiry: new Date("2028-12-01"), contact: "9876543210", safetyScore: 96, status: "AVAILABLE" },
-      { name: "John", licenseNo: "DL-44120", licenseCategory: "HMV", licenseExpiry: new Date("2025-03-01"), contact: "9822012345", safetyScore: 81, status: "SUSPENDED" },
-      { name: "Priya", licenseNo: "DL-77031", licenseCategory: "LMV", licenseExpiry: new Date("2027-08-01"), contact: "9911098765", safetyScore: 99, status: "ON_TRIP" },
-      { name: "Suresh", licenseNo: "DL-90045", licenseCategory: "HMV", licenseExpiry: new Date("2027-01-01"), contact: "9744055555", safetyScore: 88, status: "OFF_DUTY" },
-      { name: "Meera", licenseNo: "DL-55210", licenseCategory: "LMV", licenseExpiry: new Date("2026-11-01"), contact: "9001122334", safetyScore: 92, status: "AVAILABLE" },
+      { name: "Alex", email: "alex@transitops.in", licenseNo: "DL-88213", licenseCategory: "LMV", licenseExpiry: new Date("2028-12-01"), contact: "9876543210", safetyScore: 96, status: "AVAILABLE" },
+      { name: "John", email: "john@transitops.in", licenseNo: "DL-44120", licenseCategory: "HMV", licenseExpiry: new Date("2025-03-01"), contact: "9822012345", safetyScore: 81, status: "SUSPENDED" },
+      { name: "Priya", email: "priya@transitops.in", licenseNo: "DL-77031", licenseCategory: "LMV", licenseExpiry: new Date("2027-08-01"), contact: "9911098765", safetyScore: 99, status: "ON_TRIP" },
+      { name: "Suresh", email: "suresh@transitops.in", licenseNo: "DL-90045", licenseCategory: "HMV", licenseExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), contact: "9744055555", safetyScore: 88, status: "OFF_DUTY" },
+      { name: "Meera", email: "meera@transitops.in", licenseNo: "DL-55210", licenseCategory: "LMV", licenseExpiry: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), contact: "9001122334", safetyScore: 92, status: "AVAILABLE" },
     ].map((data) => prisma.driver.create({ data }))
   );
 

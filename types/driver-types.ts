@@ -10,6 +10,7 @@ export const driverSchema = z.object({
   licenseExpiry: z.coerce.date({
     message: "Invalid expiry date",
   }),
+  email: z.string().trim().email("Invalid email format").optional().or(z.literal("")),
   contact: z.string().trim().min(1, "Contact is required").max(20),
   safetyScore: z.number().int().min(0).max(100).default(100),
   status: z.nativeEnum(DriverStatus, {

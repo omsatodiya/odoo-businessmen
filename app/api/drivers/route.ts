@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
     const driver = await prisma.driver.create({
       data: {
         name: result.data.name,
+        email: result.data.email,
         licenseNo: result.data.licenseNo,
         licenseCategory: result.data.licenseCategory,
         licenseExpiry: result.data.licenseExpiry,
