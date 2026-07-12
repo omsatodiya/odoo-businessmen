@@ -1,13 +1,8 @@
-import { HeroSection } from "@/components/landing/hero-section"
-import { FeaturesSection } from "@/components/landing/features-section"
-import { CTASection } from "@/components/landing/cta-section"
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-background">
-      <HeroSection />
-      <FeaturesSection />
-      <CTASection />
-    </main>
-  )
+import { getSession } from "@/lib/session";
+
+export default async function RootPage() {
+  const session = await getSession();
+  redirect(session ? "/dashboard" : "/login");
 }

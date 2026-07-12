@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Merriweather, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -21,10 +19,10 @@ const fontMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Odoo Boilerplate",
-    template: "%s | Odoo Boilerplate",
+    default: "TransitOps",
+    template: "%s | TransitOps",
   },
-  description: "A fast, secure Next.js 16 boilerplate with users, products, and organization routes.",
+  description: "Smart Transport Operations Platform — vehicle, driver, dispatch, maintenance, and expense management.",
 };
 
 export default function RootLayout({
@@ -41,11 +39,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <div className="flex-1">
-            {children}
-          </div>
-          <Footer />
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>
