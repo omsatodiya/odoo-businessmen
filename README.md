@@ -17,6 +17,17 @@ Digitizes the full lifecycle of transport operations that most companies still r
 - **Dashboard** — fleet-wide KPIs, recent trips, and vehicle status breakdown.
 - **Settings** — depot config and a read-only view of the RBAC matrix.
 
+## Bonus Features
+
+In addition to core features, TransitOps includes several premium, enterprise-grade capabilities:
+
+- **Email Expiry Reminder Service** — Timezone-safe API scanning for driver license expiries at exactly 3 and 7 days. Dispatches warning emails via a local development fallback that saves formatted HTML previews to `tmp/sent-emails/`, plus a manual **Send Reminders** dispatcher action button.
+- **Global Command Palette (Ctrl+K / ⌘K)** — Universal search overlay supporting fast app navigation, vehicle, driver, and trip lookups, dynamically filtered based on user permissions.
+- **Print-to-PDF Optimized Views** — Custom print-friendly pages (`/analytics-print` and `/fuel-expenses-print`) styled specifically for browser print dialogs to generate clean PDF reports.
+- **Responsive Light & Dark Modes** — Theme toggler embedded in the top header utilizing `next-themes` to render high-contrast light and dark views dynamically.
+- **Advanced CSV Export** — Downloadable CSV report generator for fleet analytics, formatted cleanly to match dashboard metrics.
+- **Enhanced Visual Scannability** — Clean font weight hierarchy, monospace badges for license/registration lookups, uppercase unit annotations (`KM`, `KG`, `₹`), and color-coded status badges.
+
 ## Roles (RBAC)
 
 One login, four roles, each scoped to a different slice of the app — see `lib/rbac.ts` for the exact access matrix:
