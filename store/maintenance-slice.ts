@@ -13,6 +13,7 @@ interface MaintenanceState {
   fetch: () => Promise<void>;
   open: (dto: CreateMaintenanceInput) => Promise<void>;
   closeLog: (logId: string) => Promise<void>;
+  deleteLog: (logId: string) => Promise<void>;
 }
 
 export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
@@ -70,6 +71,29 @@ export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
 
       if (!res.ok) {
         const err = new Error(json.error?.message || "Failed to close maintenance log") as Error & {
+          details?: unknown;
+        };
+        err.details = json.error?.details;
+        throw err;
+      }
+
+      await get().fetch();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "An unknown error occurred";
+      set({ error: errorMsg, loading: false });
+      throw err;
+    }
+  },
+  deleteLog: async (logId) => {
+    set({ loading: true, error: undefined });
+    try {
+      const res = await fetch(`/api/maintenance/${logId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        const err = new Error(json.error?.message || "Failed to delete maintenance log") as Error & {
           details?: unknown;
         };
         err.details = json.error?.details;

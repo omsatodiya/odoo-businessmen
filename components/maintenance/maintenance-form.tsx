@@ -31,7 +31,7 @@ export function MaintenanceForm() {
     fetchVehicles();
   }, [fetchVehicles]);
 
-  const activeVehicles = vehicles.filter((v) => v.status !== "RETIRED");
+  const activeVehicles = vehicles.filter((v) => v.status !== "IN_SHOP" && v.status !== "RETIRED");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export function MaintenanceForm() {
       setErrors((prev) => ({ ...prev, type: "Service type is required" }));
       return;
     }
-    const costNum = parseFloat(cost);
+    const costNum = cost ? parseFloat(cost) : 0;
     if (isNaN(costNum) || costNum < 0) {
       setErrors((prev) => ({ ...prev, cost: "Cost must be a non-negative number" }));
       return;
@@ -67,14 +67,16 @@ export function MaintenanceForm() {
     } catch (err: any) {
       if (err.details) {
         const formErrors: Record<string, string> = {};
+        const errorMessages: string[] = [];
         Object.keys(err.details).forEach((key) => {
           const fieldError = err.details?.[key];
           if (key !== "_errors" && fieldError?._errors?.length) {
             formErrors[key] = fieldError._errors[0];
+            errorMessages.push(`${key}: ${fieldError._errors[0]}`);
           }
         });
         setErrors(formErrors);
-        toast.error("Please correct the validation errors.");
+        toast.error(`Please correct the validation errors: ${errorMessages.join(", ")}`);
       } else {
         toast.error(err.message || "Failed to open maintenance log");
       }

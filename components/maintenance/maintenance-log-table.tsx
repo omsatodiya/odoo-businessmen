@@ -8,15 +8,20 @@ import { Button } from "@/components/ui/button";
 import { can } from "@/lib/rbac";
 import { Role } from "@prisma/client";
 import { toast } from "sonner";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface MaintenanceLogTableProps {
   role: Role;
 }
 
 export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
-  const { items, fetch: fetchLogs, loading, closeLog } = useMaintenanceStore();
+  const { items, fetch: fetchLogs, loading, closeLog, deleteLog } = useMaintenanceStore();
   const [closingId, setClosingId] = useState<string | null>(null);
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<MaintenanceLogWithVehicle | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -33,6 +38,26 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
       toast.error(err.message || "Failed to complete maintenance");
     } finally {
       setClosingId(null);
+    }
+  };
+
+  const handleDeleteClick = (log: MaintenanceLogWithVehicle) => {
+    setLogToDelete(log);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!logToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteLog(logToDelete.id);
+      toast.success("Maintenance log deleted successfully.");
+      setDeleteConfirmOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete log");
+    } finally {
+      setIsDeleting(false);
+      setLogToDelete(null);
     }
   };
 
@@ -109,25 +134,36 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
   if (isFullAccess) {
     columns.push({
       header: <span className="pr-6 block">Actions</span>,
-      className: "text-right w-28",
+      className: "text-right w-36",
       cell: (log) => {
-        if (log.status !== "ACTIVE") return null;
         const isClosing = closingId === log.id;
         return (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-1.5">
+            {log.status === "ACTIVE" && (
+              <Button
+                size="xs"
+                variant="outline"
+                className="h-7 text-xs border-chart-2/40 hover:bg-chart-2/10 hover:text-chart-2"
+                onClick={() => handleComplete(log.id)}
+                disabled={isClosing}
+              >
+                {isClosing ? (
+                  <Loader2 className="size-3 animate-spin mr-1" />
+                ) : (
+                  <Check className="size-3 mr-1" />
+                )}
+                Complete
+              </Button>
+            )}
             <Button
-              size="xs"
-              variant="outline"
-              className="h-7 text-xs border-chart-2/40 hover:bg-chart-2/10 hover:text-chart-2"
-              onClick={() => handleComplete(log.id)}
+              size="icon"
+              variant="ghost"
+              className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => handleDeleteClick(log)}
               disabled={isClosing}
+              title="Delete log"
             >
-              {isClosing ? (
-                <Loader2 className="size-3 animate-spin mr-1" />
-              ) : (
-                <Check className="size-3 mr-1" />
-              )}
-              Complete
+              <Trash2 className="size-3.5" />
             </Button>
           </div>
         );
@@ -146,6 +182,20 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
         isLoading={loading}
         emptyMessage="No maintenance service records found."
         getRowKey={(row) => row.id}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete Maintenance Log"
+        description={
+          logToDelete
+            ? `Are you sure you want to delete the maintenance log for vehicle ${logToDelete.vehicle.regNo} (${logToDelete.type})? This will remove the record permanently. If active, the vehicle will be returned to Available.`
+            : ""
+        }
+        confirmLabel="Delete Log"
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
       />
     </div>
   );
