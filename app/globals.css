@@ -1,40 +1,130 @@
+/* ============================================================================
+   TRANSITOPS THEME — READ THIS BEFORE TOUCHING ANY COLOR IN THE APP
+   ============================================================================
+
+   Design language: black/white/gray neutrals + blue as the one accent color,
+   used across a full scale of shades. This file is the ONLY place colors are
+   defined — every component reads them through Tailwind utility classes
+   (`bg-primary`, `text-muted-foreground`, `border-border`, etc.), never a
+   raw hex code.
+
+   THE RULE: if you're about to write `bg-blue-500`, `text-green-600`,
+   `#1166d4`, or any other literal color in a .tsx file — stop. Either an
+   existing token below already covers it, or it belongs in this file as a
+   new token everyone can reuse. Grep the codebase first
+   (`bg-(red|green|blue|...)-[0-9]`) — if that ever returns a hit outside
+   this file, it's a bug to fix, not a pattern to copy.
+
+   HOW THE THREE LAYERS WORK
+   -------------------------
+   1. NEUTRALS — background / foreground / card / popover / secondary /
+      muted / border / input / sidebar*. True grayscale, no hue. This is the
+      "black and white" part of the theme. Almost every surface and text
+      color in the app should be one of these.
+
+   2. BRAND (BLUE) — --blue-50 through --blue-950 is the full shade scale.
+      --primary / --accent / --ring / --sidebar-primary / --sidebar-accent /
+      --sidebar-ring / --chart-1..5 are all assigned FROM this scale. This is
+      the one color family used for anything "brand" — primary buttons,
+      active nav state, focus rings, links, and chart bars/lines. Need a
+      lighter or darker touch of blue somewhere new? Reach for a step on
+      this scale (`--blue-100`, `--blue-800`, …) rather than inventing a hex
+      value, and if you need it as a Tailwind class, use the arbitrary-value
+      escape hatch: `bg-[var(--blue-100)]`.
+
+   3. SEMANTIC STATUS — --destructive (red), --success (green), --warning
+      (amber). This is the ONE deliberate exception to "just blue": status
+      meaning (error / good / caution) needs a color the eye can tell apart
+      from "this is clickable," so these three stay outside the blue scale.
+      Used almost exclusively via components/shared/status-badge.tsx — you
+      should not need to reach for these directly outside that component.
+
+   HOW TO ACTUALLY CHANGE THE UI
+   ------------------------------
+   - Want to retheme the whole app (e.g. swap blue for another brand color)?
+     Edit the --blue-* scale + --success/--warning/--destructive in ONE
+     place: this file, both the `:root` block (light mode) and the `.dark`
+     block (dark mode). Every shadcn component and every custom component in
+     this codebase already reads from these variables — nothing else needs
+     to change.
+   - Want a new status color for a new enum value? Add it to
+     components/shared/status-badge.tsx's STATUS_STYLES map, reusing one of
+     the tokens above (chart-1 for "informational", success/warning/
+     destructive/muted for state) — do not invent a new CSS variable for a
+     single component's use case.
+   - Building a new page? Use shadcn components (Button, Card, Badge, Select,
+     Dialog, …) from components/ui/* wherever possible instead of raw
+     `<div>`/`<button>` — they're pre-wired to every token below, so a new
+     page automatically matches the theme with zero color decisions of your
+     own to make.
+   - See design.md for the full component-level design system (spacing,
+     typography, motion) that sits on top of this palette.
+   ========================================================================== */
+
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* --- Neutrals (black / white / gray) --- */
   --background: #ffffff;
-  --foreground: #262626;
+  --foreground: #171717;
   --card: #ffffff;
-  --card-foreground: #262626;
+  --card-foreground: #171717;
   --popover: #ffffff;
-  --popover-foreground: #262626;
-  --primary: #1166d4;
-  --primary-foreground: #ffffff;
-  --secondary: #f3f5f7;
-  --secondary-foreground: #262626;
+  --popover-foreground: #171717;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
   --muted: #f5f5f5;
   --muted-foreground: #737373;
-  --accent: #ecf4fd;
-  --accent-foreground: #0d4fa5;
+  --border: #e0e0e0;
+  --input: #e6e6e6;
+
+  /* --- Blue scale: the one brand color, every shade of it ---
+     600 is anchored to the original brand blue used everywhere already. */
+  --blue-50: #eaf3ff;
+  --blue-100: #d3e6fe;
+  --blue-200: #a8ccfd;
+  --blue-300: #80bbff;
+  --blue-400: #4f97f0;
+  --blue-500: #2c7ce3;
+  --blue-600: #1166d4;
+  --blue-700: #0d52ab;
+  --blue-800: #0a3f83;
+  --blue-900: #072c5c;
+  --blue-950: #041b3a;
+
+  --primary: var(--blue-600);
+  --primary-foreground: #ffffff;
+  --accent: var(--blue-50);
+  --accent-foreground: var(--blue-700);
+  --ring: var(--blue-600);
+
+  /* --- Semantic status (the one deliberate exception to "just blue") --- */
   --destructive: #ce1212;
   --destructive-foreground: #ffffff;
-  --border: #d1d1d1;
-  --input: #e6e6e6;
-  --ring: #1166d4;
-  --chart-1: #1166d4;
-  --chart-2: #10b77f;
-  --chart-3: #e07306;
-  --chart-4: #a936e2;
-  --chart-5: #ec135b;
+  --success: #15803d;
+  --success-foreground: #ffffff;
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+
+  /* --- Charts: shades of blue, not a rainbow --- */
+  --chart-1: var(--blue-600);
+  --chart-2: var(--blue-400);
+  --chart-3: var(--blue-800);
+  --chart-4: var(--blue-300);
+  --chart-5: var(--blue-900);
+
+  /* --- Sidebar: neutral surface, blue accent --- */
   --sidebar: #fafafa;
   --sidebar-foreground: #404040;
-  --sidebar-primary: #1166d4;
+  --sidebar-primary: var(--blue-600);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaeff6;
-  --sidebar-accent-foreground: #0d4fa5;
+  --sidebar-accent: var(--blue-50);
+  --sidebar-accent-foreground: var(--blue-700);
   --sidebar-border: #e6e6e6;
-  --sidebar-ring: #1166d4;
+  --sidebar-ring: var(--blue-600);
+
   --font-sans: Geist, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Merriweather, ui-serif, serif;
   --font-mono: JetBrains Mono, ui-monospace, monospace;
@@ -58,38 +148,65 @@
 }
 
 .dark {
+  /* --- Neutrals (black / white / gray) --- */
   --background: #1f1f1f;
   --foreground: #ebebeb;
   --card: #262626;
   --card-foreground: #ebebeb;
   --popover: #262626;
   --popover-foreground: #ebebeb;
-  --primary: #80bbff;
-  --primary-foreground: #001833;
   --secondary: #333333;
   --secondary-foreground: #ebebeb;
   --muted: #2e2e2e;
   --muted-foreground: #a6a6a6;
-  --accent: #003066;
-  --accent-foreground: #b3d6ff;
-  --destructive: #df2020;
-  --destructive-foreground: #ffffff;
   --border: #404040;
   --input: #404040;
-  --ring: #80bbff;
-  --chart-1: #80bbff;
-  --chart-2: #47d1a3;
-  --chart-3: #f6c155;
-  --chart-4: #b37de8;
-  --chart-5: #ed5ea6;
+
+  /* Same blue scale as :root — colors don't change between modes, only
+     which step of the scale each token points to. */
+  --blue-50: #eaf3ff;
+  --blue-100: #d3e6fe;
+  --blue-200: #a8ccfd;
+  --blue-300: #80bbff;
+  --blue-400: #4f97f0;
+  --blue-500: #2c7ce3;
+  --blue-600: #1166d4;
+  --blue-700: #0d52ab;
+  --blue-800: #0a3f83;
+  --blue-900: #072c5c;
+  --blue-950: #041b3a;
+
+  --primary: var(--blue-300);
+  --primary-foreground: #001833;
+  --accent: var(--blue-900);
+  --accent-foreground: var(--blue-200);
+  --ring: var(--blue-300);
+
+  /* --- Semantic status --- */
+  --destructive: #df2020;
+  --destructive-foreground: #ffffff;
+  --success: #4ade80;
+  --success-foreground: #052e14;
+  --warning: #fbbf24;
+  --warning-foreground: #451a03;
+
+  /* --- Charts: shades of blue --- */
+  --chart-1: var(--blue-300);
+  --chart-2: var(--blue-400);
+  --chart-3: var(--blue-100);
+  --chart-4: var(--blue-500);
+  --chart-5: var(--blue-200);
+
+  /* --- Sidebar --- */
   --sidebar: #1a1a1a;
   --sidebar-foreground: #d9d9d9;
-  --sidebar-primary: #80bbff;
+  --sidebar-primary: var(--blue-300);
   --sidebar-primary-foreground: #001833;
   --sidebar-accent: #333333;
   --sidebar-accent-foreground: #f2f2f2;
   --sidebar-border: #383838;
-  --sidebar-ring: #80bbff;
+  --sidebar-ring: var(--blue-300);
+
   --font-sans: Geist, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Merriweather, ui-serif, serif;
   --font-mono: JetBrains Mono, ui-monospace, monospace;
@@ -127,6 +244,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -135,6 +256,17 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-blue-50: var(--blue-50);
+  --color-blue-100: var(--blue-100);
+  --color-blue-200: var(--blue-200);
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-800);
+  --color-blue-900: var(--blue-900);
+  --color-blue-950: var(--blue-950);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

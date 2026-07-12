@@ -50,8 +50,8 @@ export default function DriversPage() {
   };
 
   const getSafetyBadgeStyle = (score: number) => {
-    if (score >= 90) return "bg-chart-2/15 text-chart-2 border border-chart-2/20";
-    if (score >= 80) return "bg-chart-3/15 text-chart-3 border border-chart-3/20";
+    if (score >= 90) return "bg-success/15 text-success border border-success/20";
+    if (score >= 80) return "bg-warning/15 text-warning border border-warning/20";
     return "bg-destructive/10 text-destructive border border-destructive/20";
   };
 
@@ -325,7 +325,7 @@ export default function DriversPage() {
           <Button
             disabled={!selectedDriver || selectedDriver.status === "ON_TRIP"}
             onClick={() => handleStatusToggle("AVAILABLE")}
-            className="bg-chart-2/10 hover:bg-chart-2/20 text-chart-2 border border-chart-2/20 h-9 font-medium"
+            className="bg-success/10 hover:bg-success/20 text-success border border-success/20 h-9 font-medium"
           >
             Available
           </Button>
@@ -345,14 +345,14 @@ export default function DriversPage() {
           <Button
             disabled={!selectedDriver || selectedDriver.status === "ON_TRIP"}
             onClick={() => handleStatusToggle("SUSPENDED")}
-            className="bg-chart-3/10 hover:bg-chart-3/20 text-chart-3 border border-chart-3/20 h-9 font-medium"
+            className="bg-warning/10 hover:bg-warning/20 text-warning border border-warning/20 h-9 font-medium"
           >
             Suspended
           </Button>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2.5 border border-border/40">
-          <ShieldAlert className="size-4 text-chart-3 shrink-0" />
+          <ShieldAlert className="size-4 text-warning shrink-0" />
           <span>Rule: Expired license or Suspended status → blocked from trip assignment</span>
         </div>
       </div>

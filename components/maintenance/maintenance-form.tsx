@@ -184,12 +184,12 @@ export function MaintenanceForm() {
               Start:
             </span>
             <div className="flex items-center gap-1">
-              <CheckCircle2 className="size-3 text-chart-2" />
+              <CheckCircle2 className="size-3 text-success" />
               <span>Available</span>
             </div>
             <ArrowRight className="size-3" />
             <div className="flex items-center gap-1">
-              <Wrench className="size-3 text-chart-3" />
+              <Wrench className="size-3 text-warning" />
               <span>In Shop</span>
             </div>
           </div>
@@ -199,12 +199,12 @@ export function MaintenanceForm() {
               Finish:
             </span>
             <div className="flex items-center gap-1">
-              <Wrench className="size-3 text-chart-3" />
+              <Wrench className="size-3 text-warning" />
               <span>In Shop</span>
             </div>
             <ArrowRight className="size-3" />
             <div className="flex items-center gap-1">
-              <CheckCircle2 className="size-3 text-chart-2" />
+              <CheckCircle2 className="size-3 text-success" />
               <span>Available</span>
             </div>
           </div>

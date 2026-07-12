@@ -17,9 +17,15 @@ every rule below maps to a copy-pasteable Tailwind pattern.
    loud. (Already set in `globals.css`: `--radius: 0` → sharp corners
    everywhere. Lean into that "engineered console" feel, don't fight it with
    rounded cards.)
-2. **Color is a signal, not decoration.** `primary` (blue) means "this is the
-   one thing to click." Status colors mean exactly one status each (§3).
-   Everything else stays neutral (`foreground`/`muted-foreground`/`border`).
+2. **Black, white, and blue — nothing else, except three status colors.** The
+   whole app is neutral grayscale (`background`/`foreground`/`card`/`border`/
+   `sidebar`) plus one brand color (`primary`, and its full scale
+   `--blue-50`…`--blue-950`) used for anything clickable, active, or charted.
+   The only deliberate exception is three semantic status tokens —
+   `success` (green), `warning` (amber), `destructive` (red) — because status
+   meaning needs to be tellable apart from "this is a button" at a glance.
+   Full rationale and the exact token list: `app/globals.css`'s top comment
+   block — read that before touching any color.
 3. **Two typefaces, two jobs.** `font-sans` (Geist) for every label, heading,
    and button. `font-mono` (JetBrains Mono) for **every number** — odometer,
    currency, percentages, counts, dates in tables. This one rule does more to
@@ -27,7 +33,8 @@ every rule below maps to a copy-pasteable Tailwind pattern.
    consistently everywhere numbers appear.
 4. **Never introduce a new color.** Every hex value already lives in
    `app/globals.css` as a CSS variable. If you need a color, it's `bg-primary`,
-   `text-destructive`, `bg-chart-3/15`, etc. — never `bg-orange-500`.
+   `text-destructive`, `bg-success/15`, `bg-[var(--blue-100)]`, etc. — never
+   `bg-orange-500` or a literal hex code.
 
 ---
 
@@ -55,9 +62,9 @@ every rule below maps to a copy-pasteable Tailwind pattern.
 
 | Status | Token | Example classes |
 |---|---|---|
-| Available / Completed / Active-good | `chart-2` (green) | `bg-chart-2/15 text-chart-2` |
+| Available / Completed / Active-good | `success` (green) | `bg-success/15 text-success` |
 | On Trip / Dispatched / In progress | `primary` (blue) | `bg-primary/15 text-primary` |
-| In Shop / Suspended / Warning | `chart-3` (orange) | `bg-chart-3/15 text-chart-3` |
+| In Shop / Suspended / Warning | `warning` (amber) | `bg-warning/15 text-warning` |
 | Retired / Cancelled / Error | `destructive` (red) | `bg-destructive/10 text-destructive` |
 | Draft / Off Duty / Neutral | `muted-foreground` | `bg-muted text-muted-foreground` |
 
@@ -211,9 +218,11 @@ instant, not have a fade delay), anything on every re-render of live data
 
 - **Dashboard** — KPI row (7 cards, `grid-cols-2 lg:grid-cols-4`, wrap to 2
   rows), then a two-column split: Recent Trips table (left, wider) + Vehicle
-  Status bars (right, narrower) — horizontal bars using `chart-1..4` colors
-  matching each status, not a pie chart (matches wireframe intent, reads
-  faster at a glance).
+  Status bars (right, narrower) — horizontal bars using the **same status
+  tokens as StatusBadge** (`success`/`primary`/`warning`/`destructive` for
+  Available/On Trip/In Shop/Retired), not a pie chart and not `chart-*`
+  (those are for genuine data-viz like Analytics, not status indicators —
+  matches wireframe intent, reads faster at a glance).
 - **Fleet / Drivers** — straightforward DataTable + FilterBar + FormModal.
   The "premium" touch here is just doing §3–§5 consistently — don't over-design.
 - **Trips** — this is the most "alive" screen. Give the Live Board cards a

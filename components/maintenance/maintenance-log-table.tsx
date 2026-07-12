@@ -139,7 +139,7 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
               <Button
                 size="xs"
                 variant="outline"
-                className="h-7 text-xs border-chart-2/40 hover:bg-chart-2/10 hover:text-chart-2"
+                className="h-7 text-xs border-success/40 hover:bg-success/10 hover:text-success"
                 onClick={() => handleComplete(log.id)}
                 disabled={isClosing}
               >
