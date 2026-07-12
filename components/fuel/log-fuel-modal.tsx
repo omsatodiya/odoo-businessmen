@@ -36,42 +36,35 @@ interface OptionTrip {
 export function LogFuelModal({ open, onOpenChange }: LogFuelModalProps) {
   const createFuelLog = useFuelExpenseStore((state) => state.createFuelLog);
 
+  // Fields initialize fresh from props — the parent remounts this component
+  // (via a `key` tied to the open state) each time the modal opens, so
+  // there's no need to sync/reset via an effect.
   const [vehicles, setVehicles] = useState<OptionVehicle[]>([]);
   const [trips, setTrips] = useState<OptionTrip[]>([]);
-  
+
   const [vehicleId, setVehicleId] = useState("");
   const [tripId, setTripId] = useState("none");
   const [liters, setLiters] = useState("");
   const [cost, setCost] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (open) {
-      // Fetch options
-      fetch("/api/fuel-logs/options")
-        .then((res) => res.json())
-        .then((json) => {
-          if (json.data) {
-            setVehicles(json.data.vehicles || []);
-            setTrips(json.data.trips || []);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load options", err);
-          toast.error("Failed to load vehicle/trip options");
-        });
-
-      setVehicleId("");
-      setTripId("none");
-      setLiters("");
-      setCost("");
-      setDate(new Date().toISOString().split("T")[0]);
-      setErrors({});
-    }
-  }, [open]);
+    fetch("/api/fuel-logs/options")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) {
+          setVehicles(json.data.vehicles || []);
+          setTrips(json.data.trips || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load options", err);
+        toast.error("Failed to load vehicle/trip options");
+      });
+  }, []);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -100,8 +93,8 @@ export function LogFuelModal({ open, onOpenChange }: LogFuelModalProps) {
       await createFuelLog(payload);
       toast.success("Fuel log added successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save fuel log");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save fuel log");
     } finally {
       setIsSubmitting(false);
     }

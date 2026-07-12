@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireAccess, AuthError } from "@/lib/session";
 import { Api } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
@@ -11,11 +12,11 @@ function toNumber(value: unknown): number {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAccess("FUEL_EXPENSES", "VIEW");
+    await requireAccess("FUEL_EXPENSES", "VIEW");
     const { searchParams } = new URL(req.url);
     const vehicleId = searchParams.get("vehicleId");
 
-    const where: any = {};
+    const where: Prisma.FuelLogWhereInput = {};
     if (vehicleId && vehicleId !== "ALL") {
       where.vehicleId = vehicleId;
     }
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAccess("FUEL_EXPENSES", "FULL");
+    await requireAccess("FUEL_EXPENSES", "FULL");
     const body = await req.json();
     const result = fuelLogSchema.safeParse(body);
     if (!result.success) {

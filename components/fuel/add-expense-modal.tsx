@@ -38,13 +38,16 @@ interface OptionTrip {
 export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
   const createExpense = useFuelExpenseStore((state) => state.createExpense);
 
+  // Fields initialize fresh from props — the parent remounts this component
+  // (via a `key` tied to the open state) each time the modal opens, so
+  // there's no need to sync/reset via an effect.
   const [vehicles, setVehicles] = useState<OptionVehicle[]>([]);
   const [trips, setTrips] = useState<OptionTrip[]>([]);
-  
+
   const [vehicleId, setVehicleId] = useState("");
   const [type, setType] = useState<ExpenseType>("TOLL");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [tripId, setTripId] = useState("none");
   const [note, setNote] = useState("");
 
@@ -52,30 +55,19 @@ export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (open) {
-      // Fetch options
-      fetch("/api/fuel-logs/options")
-        .then((res) => res.json())
-        .then((json) => {
-          if (json.data) {
-            setVehicles(json.data.vehicles || []);
-            setTrips(json.data.trips || []);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load options", err);
-          toast.error("Failed to load vehicle/trip options");
-        });
-
-      setVehicleId("");
-      setType("TOLL");
-      setAmount("");
-      setDate(new Date().toISOString().split("T")[0]);
-      setTripId("none");
-      setNote("");
-      setErrors({});
-    }
-  }, [open]);
+    fetch("/api/fuel-logs/options")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) {
+          setVehicles(json.data.vehicles || []);
+          setTrips(json.data.trips || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load options", err);
+        toast.error("Failed to load vehicle/trip options");
+      });
+  }, []);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -104,8 +96,8 @@ export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
       await createExpense(payload);
       toast.success("Expense added successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add expense");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add expense");
     } finally {
       setIsSubmitting(false);
     }

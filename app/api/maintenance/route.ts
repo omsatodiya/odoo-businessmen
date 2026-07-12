@@ -7,7 +7,7 @@ import { createMaintenanceSchema } from "@/types/maintenance";
 import { openMaintenance } from "@/lib/services/maintenance.service";
 import { BusinessError } from "@/lib/errors";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Read session to enforce FLEET VIEW permission
     await requireAccess("FLEET", "VIEW");

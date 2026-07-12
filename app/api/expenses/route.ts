@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireAccess, AuthError } from "@/lib/session";
 import { Api } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
@@ -11,11 +12,11 @@ function toNumber(value: unknown): number {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAccess("FUEL_EXPENSES", "VIEW");
+    await requireAccess("FUEL_EXPENSES", "VIEW");
     const { searchParams } = new URL(req.url);
     const vehicleId = searchParams.get("vehicleId");
 
-    const where: any = {};
+    const where: Prisma.ExpenseWhereInput = {};
     if (vehicleId && vehicleId !== "ALL") {
       where.vehicleId = vehicleId;
     }
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
         trip: {
           select: {
             code: true,
+            status: true,
           },
         },
       },
@@ -39,19 +41,20 @@ export async function GET(req: NextRequest) {
     });
 
     // Calculate metadata across shown data (filtered by vehicle if specified)
+    const vehicleFilter = vehicleId && vehicleId !== "ALL" ? { vehicleId } : {};
     const [fuelAgg, maintenanceAgg] = await Promise.all([
       prisma.fuelLog.aggregate({
-        where,
+        where: vehicleFilter,
         _sum: { cost: true },
       }),
       prisma.maintenanceLog.aggregate({
-        where: vehicleId && vehicleId !== "ALL" ? { vehicleId } : {},
+        where: vehicleFilter,
         _sum: { cost: true },
       }),
     ]);
 
-    const totalFuelCost = toNumber(fuelAgg._sum.cost);
-    const totalMaintenanceCost = toNumber(maintenanceAgg._sum.cost);
+    const totalFuelCost = toNumber(fuelAgg._sum?.cost);
+    const totalMaintenanceCost = toNumber(maintenanceAgg._sum?.cost);
     const totalOperationalCost = totalFuelCost + totalMaintenanceCost;
 
     return Api.ok(expenses, {
@@ -70,7 +73,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAccess("FUEL_EXPENSES", "FULL");
+    await requireAccess("FUEL_EXPENSES", "FULL");
     const body = await req.json();
     const result = expenseSchema.safeParse(body);
     if (!result.success) {

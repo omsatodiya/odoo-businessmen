@@ -18,9 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFuelExpenseStore } from "@/store/fuel-expense-slice";
+import type { FuelLogWithVehicle, ExpenseWithVehicle } from "@/store/fuel-expense-slice";
 import { LogFuelModal } from "@/components/fuel/log-fuel-modal";
 import { AddExpenseModal } from "@/components/fuel/add-expense-modal";
-import { cn } from "@/lib/utils";
 
 interface OptionVehicle {
   id: string;
@@ -65,7 +65,7 @@ export default function FuelExpensesPage() {
     {
       header: "Vehicle",
       accessorKey: "vehicle",
-      cell: (log: any) => (
+      cell: (log: FuelLogWithVehicle) => (
         <div className="font-semibold text-foreground">
           {log.vehicle?.regNo} <span className="text-xs font-normal text-muted-foreground">({log.vehicle?.name})</span>
         </div>
@@ -74,7 +74,7 @@ export default function FuelExpensesPage() {
     {
       header: "Date",
       accessorKey: "date",
-      cell: (log: any) => (
+      cell: (log: FuelLogWithVehicle) => (
         <span className="font-mono text-muted-foreground">
           {format(new Date(log.date), "dd MMM yyyy")}
         </span>
@@ -84,13 +84,13 @@ export default function FuelExpensesPage() {
       header: "Liters",
       accessorKey: "liters",
       className: "font-mono tabular-nums text-right",
-      cell: (log: any) => <span>{log.liters.toFixed(1)} L</span>,
+      cell: (log: FuelLogWithVehicle) => <span>{log.liters.toFixed(1)} L</span>,
     },
     {
       header: "Fuel Cost",
       accessorKey: "cost",
       className: "font-mono tabular-nums text-right font-semibold",
-      cell: (log: any) => <span>{Number(log.cost).toLocaleString("en-IN")}</span>,
+      cell: (log: FuelLogWithVehicle) => <span>{Number(log.cost).toLocaleString("en-IN")}</span>,
     },
   ];
 
@@ -98,7 +98,7 @@ export default function FuelExpensesPage() {
     {
       header: "Trip",
       accessorKey: "trip",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         <span className="font-mono font-semibold text-foreground">
           {exp.trip?.code || "—"}
         </span>
@@ -107,7 +107,7 @@ export default function FuelExpensesPage() {
     {
       header: "Vehicle",
       accessorKey: "vehicle",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         <span className="font-medium text-foreground">
           {exp.vehicle?.regNo}
         </span>
@@ -117,7 +117,7 @@ export default function FuelExpensesPage() {
       header: "Toll",
       accessorKey: "amount",
       className: "font-mono tabular-nums text-right text-muted-foreground",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         <span>{exp.type === "TOLL" ? Number(exp.amount).toLocaleString("en-IN") : "0"}</span>
       ),
     },
@@ -125,7 +125,7 @@ export default function FuelExpensesPage() {
       header: "Other",
       accessorKey: "amount",
       className: "font-mono tabular-nums text-right text-muted-foreground",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         <span>
           {["PARKING", "OTHER", "FUEL"].includes(exp.type)
             ? Number(exp.amount).toLocaleString("en-IN")
@@ -137,7 +137,7 @@ export default function FuelExpensesPage() {
       header: "Maint. (Linked)",
       accessorKey: "amount",
       className: "font-mono tabular-nums text-right text-muted-foreground",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         <span>
           {exp.type === "MAINTENANCE" ? Number(exp.amount).toLocaleString("en-IN") : "0"}
         </span>
@@ -147,12 +147,12 @@ export default function FuelExpensesPage() {
       header: "Total",
       accessorKey: "amount",
       className: "font-mono tabular-nums text-right font-semibold",
-      cell: (exp: any) => <span>{Number(exp.amount).toLocaleString("en-IN")}</span>,
+      cell: (exp: ExpenseWithVehicle) => <span>{Number(exp.amount).toLocaleString("en-IN")}</span>,
     },
     {
       header: "Trip Status",
       accessorKey: "trip",
-      cell: (exp: any) => (
+      cell: (exp: ExpenseWithVehicle) => (
         exp.trip?.status ? <StatusBadge status={exp.trip.status} /> : <span className="text-muted-foreground/60">—</span>
       ),
     },
@@ -329,8 +329,8 @@ export default function FuelExpensesPage() {
         </div>
       </div>
 
-      <LogFuelModal open={logFuelOpen} onOpenChange={setLogFuelOpen} />
-      <AddExpenseModal open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
+      <LogFuelModal key={String(logFuelOpen)} open={logFuelOpen} onOpenChange={setLogFuelOpen} />
+      <AddExpenseModal key={String(addExpenseOpen)} open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
     </div>
   );
 }

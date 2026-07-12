@@ -31,7 +31,9 @@ export function MaintenanceForm() {
     fetchVehicles();
   }, [fetchVehicles]);
 
-  const activeVehicles = vehicles.filter((v) => v.status !== "IN_SHOP" && v.status !== "RETIRED");
+  const activeVehicles = vehicles.filter(
+    (v) => v.status !== "IN_SHOP" && v.status !== "RETIRED" && v.status !== "ON_TRIP"
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +66,17 @@ export function MaintenanceForm() {
       setType("");
       setCost("");
       setNotes("");
-    } catch (err: any) {
-      if (err.details) {
+    } catch (err) {
+      const details =
+        err instanceof Error && "details" in err
+          ? (err as Error & { details?: Record<string, { _errors?: string[] } | undefined> }).details
+          : undefined;
+
+      if (details) {
         const formErrors: Record<string, string> = {};
         const errorMessages: string[] = [];
-        Object.keys(err.details).forEach((key) => {
-          const fieldError = err.details?.[key];
+        Object.keys(details).forEach((key) => {
+          const fieldError = details[key];
           if (key !== "_errors" && fieldError?._errors?.length) {
             formErrors[key] = fieldError._errors[0];
             errorMessages.push(`${key}: ${fieldError._errors[0]}`);
@@ -78,7 +85,7 @@ export function MaintenanceForm() {
         setErrors(formErrors);
         toast.error(`Please correct the validation errors: ${errorMessages.join(", ")}`);
       } else {
-        toast.error(err.message || "Failed to open maintenance log");
+        toast.error(err instanceof Error ? err.message : "Failed to open maintenance log");
       }
     }
   };

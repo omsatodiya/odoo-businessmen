@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
 import { requireAccess, AuthError } from "@/lib/session";
 import { Api } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Both Fleet Manager and Financial Analyst need access to log fuel/expenses
     await requireAccess("FUEL_EXPENSES", "VIEW");

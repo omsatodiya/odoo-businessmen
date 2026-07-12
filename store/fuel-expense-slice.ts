@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import type { FuelLog, Expense } from "@prisma/client";
+import type { FuelLog, Expense, TripStatus } from "@prisma/client";
+
+import type { FuelLogInput } from "@/types/fuel-types";
+import type { ExpenseInput } from "@/types/expense-types";
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
 
 export interface FuelLogWithVehicle extends FuelLog {
   vehicle: {
@@ -18,6 +25,7 @@ export interface ExpenseWithVehicle extends Expense {
   };
   trip?: {
     code: string;
+    status: TripStatus;
   } | null;
 }
 
@@ -34,8 +42,8 @@ export interface FuelExpenseState {
   };
   fetchFuelLogs: () => Promise<void>;
   fetchExpenses: () => Promise<void>;
-  createFuelLog: (dto: any) => Promise<void>;
-  createExpense: (dto: any) => Promise<void>;
+  createFuelLog: (dto: FuelLogInput) => Promise<void>;
+  createExpense: (dto: ExpenseInput) => Promise<void>;
   setFilter: (key: string, value: string) => void;
 }
 
@@ -70,8 +78,8 @@ export const useFuelExpenseStore = create<FuelExpenseState>((set, get) => ({
         totalOperationalCost: json.meta?.totalOperationalCost || 0,
         loading: false,
       });
-    } catch (err: any) {
-      set({ error: err.message || "Failed to load fuel logs", loading: false });
+    } catch (err) {
+      set({ error: errorMessage(err, "Failed to load fuel logs"), loading: false });
     }
   },
   fetchExpenses: async () => {
@@ -94,8 +102,8 @@ export const useFuelExpenseStore = create<FuelExpenseState>((set, get) => ({
         totalOperationalCost: json.meta?.totalOperationalCost || 0,
         loading: false,
       });
-    } catch (err: any) {
-      set({ error: err.message || "Failed to load expenses", loading: false });
+    } catch (err) {
+      set({ error: errorMessage(err, "Failed to load expenses"), loading: false });
     }
   },
   createFuelLog: async (dto) => {
@@ -112,9 +120,10 @@ export const useFuelExpenseStore = create<FuelExpenseState>((set, get) => ({
       }
       // Re-fetch both logs and expenses to update aggregates properly
       await Promise.all([get().fetchFuelLogs(), get().fetchExpenses()]);
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
+    } catch (err) {
+      const message = errorMessage(err, "Request failed");
+      set({ error: message, loading: false });
+      throw new Error(message);
     }
   },
   createExpense: async (dto) => {
@@ -131,9 +140,10 @@ export const useFuelExpenseStore = create<FuelExpenseState>((set, get) => ({
       }
       // Re-fetch both logs and expenses to update aggregates properly
       await Promise.all([get().fetchFuelLogs(), get().fetchExpenses()]);
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
+    } catch (err) {
+      const message = errorMessage(err, "Request failed");
+      set({ error: message, loading: false });
+      throw new Error(message);
     }
   },
   setFilter: (key, value) => {

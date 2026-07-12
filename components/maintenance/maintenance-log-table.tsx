@@ -34,8 +34,8 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
     try {
       await closeLog(logId);
       toast.success("Maintenance completed successfully. Vehicle is now AVAILABLE.");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to complete maintenance");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to complete maintenance");
     } finally {
       setClosingId(null);
     }
@@ -53,8 +53,8 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
       await deleteLog(logToDelete.id);
       toast.success("Maintenance log deleted successfully.");
       setDeleteConfirmOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete log");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete log");
     } finally {
       setIsDeleting(false);
       setLogToDelete(null);
