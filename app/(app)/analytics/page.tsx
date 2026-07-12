@@ -46,12 +46,14 @@ export default function AnalyticsPage() {
         title="Reports &amp; Analytics"
         description="Fleet-wide performance metrics, costs, and revenue analysis."
         actions={
-          <Button asChild variant="outline" size="sm" className="h-8 cursor-pointer text-xs font-semibold">
-            <a href="/api/analytics/export" download>
-              <Download className="mr-1.5 size-3.5" />
-              Export CSV
-            </a>
-          </Button>
+          <a
+            href="/analytics-print"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground cursor-pointer"
+          >
+            Export PDF
+          </a>
         }
       />
 
