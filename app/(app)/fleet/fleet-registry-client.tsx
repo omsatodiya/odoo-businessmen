@@ -105,14 +105,18 @@ export function FleetRegistryClient({ role }: { role: Role }) {
     },
     {
       header: "Acquisition Cost",
-      cell: (vehicle) => (
-        <span className="font-mono tabular-nums text-sm">
-          ₹ {Number(vehicle.acquisitionCost).toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </span>
-      ),
+      cell: (vehicle) => {
+        const formatted = Number(vehicle.acquisitionCost).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        const aligned = formatted.match(/^\d(?!\d)/) ? `0${formatted}` : formatted;
+        return (
+          <span className="font-mono tabular-nums text-sm">
+            ₹ {aligned}
+          </span>
+        );
+      },
       className: "text-right",
     },
     {

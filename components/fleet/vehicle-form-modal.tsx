@@ -105,7 +105,7 @@ export function VehicleFormModal({ open, onOpenChange, vehicle }: VehicleFormMod
             placeholder="e.g. GJ-14-AX-1234"
             value={regNo}
             onChange={(e) => setRegNo(e.target.value)}
-            disabled={isSubmitting || !!vehicle}
+            disabled={isSubmitting}
             className="uppercase"
           />
           {errors.regNo && <p className="text-xs text-destructive">{errors.regNo}</p>}
