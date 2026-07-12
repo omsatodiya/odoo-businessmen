@@ -104,14 +104,24 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
         title="Vehicle Maintenance"
         description="Track and manage vehicle service history and shop status."
         actions={
-          isFullAccess && (
-            <Button
-              onClick={() => setFormModalOpen(true)}
-              className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5"
+          <div className="flex items-center gap-3">
+            <a
+              href="/maintenance-print"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground cursor-pointer"
             >
-              <Plus className="size-4 stroke-[3]" /> Add Log
-            </Button>
-          )
+              Export PDF
+            </a>
+            {isFullAccess && (
+              <Button
+                onClick={() => setFormModalOpen(true)}
+                className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5"
+              >
+                <Plus className="size-4 stroke-[3]" /> Add Log
+              </Button>
+            )}
+          </div>
         }
       />
 
