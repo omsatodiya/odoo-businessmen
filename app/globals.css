@@ -170,6 +170,19 @@
   body {
     @apply bg-background text-foreground;
   }
+  button,
+  [role="button"],
+  a,
+  select,
+  input[type="submit"],
+  input[type="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role^="menuitem"],
+  [data-slot="select-item"],
+  [data-slot^="dropdown-menu-"] {
+    cursor: pointer !important;
+  }
 }
 
 /* Custom Scrollbar */

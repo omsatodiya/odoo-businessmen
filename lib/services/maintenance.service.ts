@@ -12,9 +12,6 @@ export async function openMaintenance(input: OpenMaintenanceInput) {
   return prisma.$transaction(async (tx) => {
     const vehicle = await tx.vehicle.findUnique({ where: { id: input.vehicleId } });
     if (!vehicle) throw new BusinessError("VEHICLE_NOT_FOUND", "Vehicle not found");
-    if (vehicle.status === "ON_TRIP") {
-      throw new BusinessError("VEHICLE_ON_TRIP", "Cannot open maintenance while the vehicle is on a trip");
-    }
     if (vehicle.status === "RETIRED") {
       throw new BusinessError("VEHICLE_RETIRED", "Cannot open maintenance on a retired vehicle");
     }
@@ -53,5 +50,23 @@ export async function closeMaintenance(logId: string) {
     }
 
     return updatedLog;
+  });
+}
+
+export async function deleteMaintenance(logId: string) {
+  return prisma.$transaction(async (tx) => {
+    const log = await tx.maintenanceLog.findUnique({ where: { id: logId }, include: { vehicle: true } });
+    if (!log) throw new BusinessError("MAINTENANCE_NOT_FOUND", "Maintenance log not found");
+
+    await tx.maintenanceLog.delete({ where: { id: logId } });
+
+    if (log.status === "ACTIVE" && log.vehicle.status === "IN_SHOP") {
+      const otherActive = await tx.maintenanceLog.findFirst({
+        where: { vehicleId: log.vehicleId, status: "ACTIVE" },
+      });
+      if (!otherActive) {
+        await tx.vehicle.update({ where: { id: log.vehicleId }, data: { status: "AVAILABLE" } });
+      }
+    }
   });
 }

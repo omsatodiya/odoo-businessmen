@@ -57,7 +57,7 @@ export function DataTable<T>({
               : "Loading users..."
 
   return (
-    <div className="relative hidden w-full overflow-hidden border border-border bg-card shadow-sm md:block">
+    <div className="relative w-full overflow-hidden border border-border bg-card shadow-sm">
       <TableFetchOverlay isVisible={!!showOverlay} trigger={loadingTrigger} />
 
       <motion.div
