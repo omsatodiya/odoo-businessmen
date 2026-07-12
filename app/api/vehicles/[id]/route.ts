@@ -39,6 +39,34 @@ export async function PATCH(
       data: result.data,
     });
 
+    // Sync maintenance logs based on status transition
+    if (result.data.status === "IN_SHOP" && existing.status !== "IN_SHOP") {
+      // Check if there is already an active log
+      const activeLog = await prisma.maintenanceLog.findFirst({
+        where: { vehicleId: id, status: "ACTIVE" },
+      });
+      if (!activeLog) {
+        await prisma.maintenanceLog.create({
+          data: {
+            vehicleId: id,
+            type: "General Maintenance",
+            cost: 0,
+            notes: "Created automatically via vehicle status change to IN_SHOP",
+            status: "ACTIVE",
+          },
+        });
+      }
+    } else if (existing.status === "IN_SHOP" && result.data.status && result.data.status !== "IN_SHOP") {
+      // Close active logs if moved out of IN_SHOP
+      await prisma.maintenanceLog.updateMany({
+        where: { vehicleId: id, status: "ACTIVE" },
+        data: {
+          status: "COMPLETED",
+          closedAt: new Date(),
+        },
+      });
+    }
+
     return Api.ok(vehicle);
   } catch (error) {
     if (error instanceof AuthError) {

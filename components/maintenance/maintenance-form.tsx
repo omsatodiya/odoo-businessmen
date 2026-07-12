@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Wrench, Info } from "lucide-react";
+import { Wrench, Info, CheckCircle2, ArrowRight } from "lucide-react";
 
 export function MaintenanceForm() {
   const { items: vehicles, fetch: fetchVehicles, loading: vehiclesLoading } = useVehicleStore();
@@ -163,11 +163,43 @@ export function MaintenanceForm() {
         </Button>
       </form>
 
-      <div className="mt-4 pt-4 border-t border-border flex items-center justify-center gap-1.5 text-muted-foreground">
-        <Info className="size-3.5" />
-        <span className="text-xs">
-          In Shop vehicles are removed from the dispatch pool.
-        </span>
+      <div className="mt-4 pt-4 border-t border-border space-y-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 justify-center">
+          <Info className="size-3.5" />
+          <span>In Shop vehicles are removed from the dispatch pool.</span>
+        </div>
+        
+        <div className="flex flex-col gap-2 pt-2.5 border-t border-border/40">
+          <div className="flex items-center justify-center gap-2">
+            <span className="font-semibold text-[9px] uppercase tracking-wider text-muted-foreground/60 w-12 text-right">
+              Start:
+            </span>
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="size-3 text-chart-2" />
+              <span>Available</span>
+            </div>
+            <ArrowRight className="size-3" />
+            <div className="flex items-center gap-1">
+              <Wrench className="size-3 text-chart-3" />
+              <span>In Shop</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-2">
+            <span className="font-semibold text-[9px] uppercase tracking-wider text-muted-foreground/60 w-12 text-right">
+              Finish:
+            </span>
+            <div className="flex items-center gap-1">
+              <Wrench className="size-3 text-chart-3" />
+              <span>In Shop</span>
+            </div>
+            <ArrowRight className="size-3" />
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="size-3 text-chart-2" />
+              <span>Available</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

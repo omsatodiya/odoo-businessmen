@@ -65,6 +65,18 @@ export async function POST(req: NextRequest) {
       data: result.data,
     });
 
+    if (vehicle.status === "IN_SHOP") {
+      await prisma.maintenanceLog.create({
+        data: {
+          vehicleId: vehicle.id,
+          type: "General Maintenance",
+          cost: 0,
+          notes: "Created automatically via vehicle registry (status set to IN_SHOP)",
+          status: "ACTIVE",
+        },
+      });
+    }
+
     return Api.created(vehicle);
   } catch (error) {
     if (error instanceof AuthError) {
