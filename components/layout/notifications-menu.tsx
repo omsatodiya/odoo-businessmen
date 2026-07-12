@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,20 +13,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNotificationStore } from "@/store/notification-slice";
-import type { NotificationSeverity } from "@/types/notification-types";
+import { markAsRead } from "@/lib/notification-read-state";
 import { cn } from "@/lib/utils";
-
-const SEVERITY_ICON: Record<NotificationSeverity, LucideIcon> = {
-  destructive: AlertCircle,
-  warning: AlertTriangle,
-  success: CheckCircle2,
-};
+import { useNotificationStore } from "@/store/notification-slice";
+import {
+  NOTIFICATION_CATEGORY_LABELS,
+  type NotificationItem,
+  type NotificationSeverity,
+} from "@/types/notification-types";
 
 const SEVERITY_STYLE: Record<NotificationSeverity, string> = {
   destructive: "text-destructive",
   warning: "text-warning",
   success: "text-success",
+  primary: "text-primary",
 };
 
 function relativeLabel(iso: string) {
@@ -46,6 +45,11 @@ export function NotificationsMenu() {
   }, [fetch]);
 
   const count = items.length;
+
+  const handleSelect = (item: NotificationItem) => {
+    markAsRead(item.id);
+    router.push(item.href);
+  };
 
   return (
     <DropdownMenu
@@ -83,27 +87,35 @@ export function NotificationsMenu() {
           </div>
         ) : (
           <div className="max-h-80 space-y-0.5 overflow-y-auto">
-            {items.map((item) => {
-              const Icon = SEVERITY_ICON[item.severity];
-              return (
-                <DropdownMenuItem
-                  key={item.id}
-                  onClick={() => router.push(item.href)}
-                  className="flex items-start gap-2 py-2 whitespace-normal"
-                >
-                  <Icon className={cn("mt-0.5 size-4 shrink-0", SEVERITY_STYLE[item.severity])} />
-                  <div className="flex-1 space-y-0.5">
-                    <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
-                  </div>
-                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                    {relativeLabel(item.timestamp)}
-                  </span>
-                </DropdownMenuItem>
-              );
-            })}
+            {items.slice(0, 8).map((item) => (
+              <DropdownMenuItem
+                key={item.id}
+                onClick={() => handleSelect(item)}
+                className="flex items-start gap-2 py-2 whitespace-normal"
+              >
+                <Bell className={cn("mt-0.5 size-4 shrink-0", SEVERITY_STYLE[item.severity])} />
+                <div className="flex-1 space-y-0.5">
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    {NOTIFICATION_CATEGORY_LABELS[item.category]}
+                  </p>
+                  <p className="text-sm font-medium text-foreground">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                </div>
+                <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                  {relativeLabel(item.timestamp)}
+                </span>
+              </DropdownMenuItem>
+            ))}
           </div>
         )}
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => router.push("/notifications")}
+          className="justify-center text-sm font-medium text-primary"
+        >
+          View all notifications
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

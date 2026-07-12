@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bell,
   Fuel,
   LayoutDashboard,
   Route,
@@ -35,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Maintenance", href: "/maintenance", icon: Wrench, resource: "FLEET" },
   { label: "Fuel & Expenses", href: "/fuel-expenses", icon: Fuel, resource: "FUEL_EXPENSES" },
   { label: "Analytics", href: "/analytics", icon: BarChart3, resource: "ANALYTICS" },
+  { label: "Notifications", href: "/notifications", icon: Bell, resource: "DASHBOARD" },
   { label: "Settings", href: "/settings", icon: Settings, resource: "SETTINGS" },
 ];
 
