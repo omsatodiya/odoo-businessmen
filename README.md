@@ -2,7 +2,7 @@
 
 **Smart Transport Operations Platform** — a centralized system for managing vehicle, driver, dispatch, maintenance, and expense operations for a transport company, built end-to-end on Next.js 16 (App Router), TypeScript, Tailwind CSS 4, Shadcn UI, Prisma 6 + PostgreSQL, Zustand, and Zod.
 
-Built for an 8-hour hackathon. See [`plan.md`](plan.md) for the team build plan, [`design.md`](design.md) for the UI/UX system, and [`next-steps.md`](next-steps.md) for the in-flight task breakdown.
+It replaces the spreadsheets and manual logbooks many transport companies still rely on with a single system of record: every vehicle and driver has one true status, every dispatch is validated against real business rules before it's allowed to happen, and every role sees exactly the slice of the operation they're responsible for.
 
 ## What it does
 
@@ -83,7 +83,7 @@ All services include health checks and persistent volumes.
 - `pnpm dev` — start the Next.js development server.
 - `pnpm build` — create a production build.
 - `pnpm lint` — run ESLint.
-- `npx prisma db push` — sync `prisma/schema.prisma` to the database (no migration files by design — see `plan.md` §3).
+- `npx prisma db push` — sync `prisma/schema.prisma` to the database (no migration files by design, for fast iteration during development).
 - `pnpm db:generate` — regenerate the Prisma Client.
 - `pnpm db:seed` — reset and reseed the full demo dataset (users, vehicles, drivers, trips, maintenance, fuel logs, expenses). Safe to re-run anytime.
 - `pnpm db:wipe` / `pnpm db:wipe:table <name>` — wipe all/one database table(s), with a confirmation prompt.
@@ -101,7 +101,7 @@ components/
   auth/                Login form
   layout/              App sidebar, topbar, user menu (RBAC-filtered nav)
   shared/              Reusable PageHeader, StatusBadge, KpiCard, FilterBar,
-                        ConfirmDialog, FormModal — built to design.md's spec
+                        ConfirmDialog, FormModal
   ui/                  Shadcn primitives
 lib/
   services/            trip.service.ts, maintenance.service.ts — the only place
@@ -123,4 +123,4 @@ types/                 Zod validation schemas + inferred TypeScript types
 - Every vehicle/driver status transition goes through `lib/services/*` — never set `.status` directly in a route handler.
 - Keep Meilisearch and Loki network access private in deployed environments.
 - Rotate `SESSION_SECRET` and the database password before exposing the stack beyond local development.
-- `prisma/schema.prisma` is intentionally migration-free for hackathon speed (`db push` only) — introduce real migrations before production use.
+- `prisma/schema.prisma` is intentionally migration-free (`db push` only) for fast schema iteration — introduce real migrations before production use.
