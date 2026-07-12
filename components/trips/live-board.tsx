@@ -1,3 +1,4 @@
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 
@@ -9,14 +10,8 @@ interface LiveBoardTrip {
   destination: string;
   vehicle: { regNo: string; name: string };
   driver: { name: string };
+  createdAt: string | Date;
 }
-
-const BORDER_COLORS: Record<string, string> = {
-  DRAFT: "border-l-muted-foreground",
-  DISPATCHED: "border-l-primary",
-  COMPLETED: "border-l-chart-2",
-  CANCELLED: "border-l-destructive",
-};
 
 export function LiveBoard({
   trips,
@@ -32,47 +27,55 @@ export function LiveBoard({
   const active = trips.filter((t) => t.status !== "CANCELLED");
 
   return (
-    <div className="space-y-3">
-      <h2 className="text-base font-semibold">Live Board</h2>
+    <div>
+      <h2 className="mb-3 text-sm font-semibold">Live Board</h2>
       {active.length === 0 ? (
         <p className="text-sm text-muted-foreground">No active trips.</p>
       ) : (
-        active.map((trip) => (
-          <div
-            key={trip.id}
-            className={`border border-border bg-card p-4 border-l-2 ${BORDER_COLORS[trip.status] ?? "border-l-border"}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-sm">{trip.code}</span>
-              <StatusBadge status={trip.status} />
-            </div>
-            <p className="mt-2 text-sm">
-              {trip.vehicle.name} ({trip.vehicle.regNo})
-            </p>
-            <p className="text-sm text-muted-foreground">{trip.driver.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {trip.source} → {trip.destination}
-            </p>
-            <div className="mt-2 flex gap-2">
-              {trip.status === "DRAFT" && (
-                <Button size="sm" onClick={() => onDispatch(trip.id)}>
-                  Dispatch
-                </Button>
-              )}
-              {trip.status === "DISPATCHED" && (
-                <>
-                  <Button size="sm" onClick={() => onComplete(trip.id)}>
-                    Complete
+        <div className="divide-y divide-border">
+          {active.map((trip) => (
+            <div key={trip.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground">{trip.code}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {trip.source} → {trip.destination}
+                  </p>
+                  <StatusBadge status={trip.status} />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-foreground">
+                    {trip.driver.name} | {trip.vehicle.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(trip.createdAt), { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2 flex gap-1.5">
+                {trip.status === "DRAFT" && (
+                  <Button size="sm" variant="outline" onClick={() => onDispatch(trip.id)}>
+                    Dispatch
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => onCancel(trip.id)}>
-                    Cancel
-                  </Button>
-                </>
-              )}
+                )}
+                {trip.status === "DISPATCHED" && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => onComplete(trip.id)}>
+                      Complete
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onCancel(trip.id)}>
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
+      <p className="mt-3 text-xs text-muted-foreground">
+        Showing {active.length} active trip{active.length !== 1 ? "s" : ""}.
+      </p>
     </div>
   );
 }
