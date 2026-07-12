@@ -84,7 +84,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
     {
       header: "REG NO",
       cell: (vehicle) => (
-        <span className="font-mono font-semibold tracking-wider text-sm uppercase">
+        <span className="font-mono font-bold tracking-wider text-sm uppercase bg-muted/40 border border-border/30 px-2 py-0.5 text-foreground select-all">
           {vehicle.regNo}
         </span>
       ),
@@ -92,7 +92,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
     {
       header: "NAME / MODEL",
       cell: (vehicle) => (
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-sm font-semibold text-foreground/90">
           {vehicle.name}
         </span>
       ),
@@ -100,14 +100,17 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
     {
       header: "TYPE",
       cell: (vehicle) => (
-        <span className="font-mono text-xs font-medium text-muted-foreground uppercase">{vehicle.type}</span>
+        <span className="font-mono text-xs font-semibold tracking-wide text-muted-foreground bg-muted/20 border border-border/10 px-1.5 py-0.5 rounded-sm uppercase">
+          {vehicle.type}
+        </span>
       ),
     },
     {
       header: "CAPACITY (KG)",
       cell: (vehicle) => (
-        <span className="font-mono tabular-nums text-sm">
-          {vehicle.capacityKg.toLocaleString()} kg
+        <span className="font-mono tabular-nums text-sm text-foreground/80">
+          {vehicle.capacityKg.toLocaleString()}{" "}
+          <span className="text-[10px] text-muted-foreground uppercase font-sans font-medium">kg</span>
         </span>
       ),
       className: "text-right",
@@ -115,8 +118,9 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
     {
       header: "ODOMETER (KM)",
       cell: (vehicle) => (
-        <span className="font-mono tabular-nums text-sm">
-          {vehicle.odometer.toLocaleString()} km
+        <span className="font-mono tabular-nums text-sm text-foreground/80">
+          {vehicle.odometer.toLocaleString()}{" "}
+          <span className="text-[10px] text-muted-foreground uppercase font-sans font-medium">km</span>
         </span>
       ),
       className: "text-right",
@@ -131,8 +135,8 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
         const aligned = formatted.match(/^\d(?!\d)/) ? `0${formatted}` : formatted;
         return (
           <div className="flex flex-col items-end font-mono text-sm tabular-nums leading-none">
-            <span className="text-[10px] text-muted-foreground mb-0.5 select-none">₹</span>
-            <span className="text-foreground">{aligned}</span>
+            <span className="text-[10px] text-muted-foreground/60 mb-0.5 select-none font-sans font-semibold">₹</span>
+            <span className="text-foreground font-semibold">{aligned}</span>
           </div>
         );
       },
@@ -140,7 +144,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
     },
     {
       header: "REGION",
-      cell: (vehicle) => <span className="text-sm font-medium">{vehicle.region || "—"}</span>,
+      cell: (vehicle) => <span className="text-sm text-muted-foreground">{vehicle.region || "—"}</span>,
     },
     {
       header: "STATUS",

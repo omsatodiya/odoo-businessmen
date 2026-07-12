@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       <AppSidebar permissions={matrix[session.role]} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppTopbar user={session} />
+        <AppTopbar user={session} permissions={matrix[session.role]} />
         <main className="flex-1 overflow-x-hidden bg-muted/20 p-4 sm:p-6">{children}</main>
       </div>
     </div>

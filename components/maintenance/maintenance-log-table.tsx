@@ -3,11 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Check, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Check, Loader2, MoreHorizontal, Plus, Trash2, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PageHeader } from "@/components/shared/page-header";
+import { FilterSearchInput } from "@/components/shared/filter-bar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -44,6 +52,11 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
   // Form modal visibility state
   const [formModalOpen, setFormModalOpen] = useState(false);
 
+  // Filters & Sorting state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("NEWEST");
+
   // Client-side pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -52,10 +65,51 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
     fetchLogs();
   }, [fetchLogs]);
 
-  // Reset current page when logs count changes
+  // Filtered and sorted items
+  const filteredAndSortedItems = useMemo(() => {
+    let result = [...items];
+
+    // 1. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (log) =>
+          log.vehicle.regNo.toLowerCase().includes(q) ||
+          log.vehicle.name.toLowerCase().includes(q) ||
+          log.type.toLowerCase().includes(q) ||
+          (log.notes && log.notes.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. Status Filter
+    if (statusFilter !== "ALL") {
+      result = result.filter((log) => log.status === statusFilter);
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      if (sortBy === "NEWEST") {
+        return new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime();
+      }
+      if (sortBy === "OLDEST") {
+        return new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
+      }
+      if (sortBy === "COST_DESC") {
+        return Number(b.cost) - Number(a.cost);
+      }
+      if (sortBy === "COST_ASC") {
+        return Number(a.cost) - Number(b.cost);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [items, searchQuery, statusFilter, sortBy]);
+
+  // Reset current page when filtered logs count changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [items.length]);
+  }, [filteredAndSortedItems.length]);
 
   const handleComplete = async (logId: string) => {
     setClosingId(logId);
@@ -92,10 +146,10 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
   // Paginated logs
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return items.slice(start, start + itemsPerPage);
-  }, [items, currentPage]);
+    return filteredAndSortedItems.slice(start, start + itemsPerPage);
+  }, [filteredAndSortedItems, currentPage]);
 
-  const totalPages = Math.ceil(items.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredAndSortedItems.length / itemsPerPage) || 1;
 
   return (
     <div className="space-y-5">
@@ -107,13 +161,68 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
           isFullAccess && (
             <Button
               onClick={() => setFormModalOpen(true)}
-              className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5"
+              className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="size-4 stroke-[3]" /> Add Log
             </Button>
           )
         }
       />
+
+      {/* Filters & Sorting */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-border bg-card/25 p-3">
+        <FilterSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search reg no, service type..."
+          className="w-full sm:max-w-md"
+        />
+
+        <div className="flex items-center gap-2">
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[125px] cursor-pointer">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL" className="cursor-pointer">All Statuses</SelectItem>
+              <SelectItem value="ACTIVE" className="cursor-pointer">Active</SelectItem>
+              <SelectItem value="COMPLETED" className="cursor-pointer">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger className="w-[140px] cursor-pointer">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NEWEST" className="cursor-pointer">Newest First</SelectItem>
+              <SelectItem value="OLDEST" className="cursor-pointer">Oldest First</SelectItem>
+              <SelectItem value="COST_DESC" className="cursor-pointer">Highest Cost</SelectItem>
+              <SelectItem value="COST_ASC" className="cursor-pointer">Lowest Cost</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 cursor-pointer text-muted-foreground hover:text-foreground border-border bg-transparent hover:bg-muted/50"
+            title="Reset Filters"
+            onClick={() => {
+              setSearchQuery("");
+              setStatusFilter("ALL");
+              setSortBy("NEWEST");
+            }}
+          >
+            <SlidersHorizontal className="size-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Main logs card */}
       <div className="border border-border bg-card rounded-md shadow-sm overflow-hidden">
@@ -369,7 +478,7 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
         {/* Table Footer / Pagination */}
         <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-muted/10">
           <div className="text-xs text-muted-foreground font-medium">
-            Showing {paginatedItems.length} of {items.length} items
+            Showing {paginatedItems.length} of {filteredAndSortedItems.length} items
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -377,7 +486,7 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
               size="sm"
               disabled={currentPage === 1 || loading}
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md"
+              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md cursor-pointer"
             >
               Previous
             </Button>
@@ -386,7 +495,7 @@ export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) 
               size="sm"
               disabled={currentPage >= totalPages || loading}
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md"
+              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md cursor-pointer"
             >
               Next
             </Button>
