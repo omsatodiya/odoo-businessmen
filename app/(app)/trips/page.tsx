@@ -2,12 +2,12 @@
 
 import { useEffect, useState, type FormEvent, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -28,18 +28,8 @@ const STEPS = [
   { key: "CANCELLED", label: "Cancel" },
 ] as const;
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
-};
-
 export default function TripsPage() {
-  const { items, options, loading, fetch, fetchOptions, create, dispatch, complete, cancel } =
+  const { items, options, fetch, fetchOptions, create, dispatch, complete, cancel } =
     useTripStore();
 
   const [completeOpen, setCompleteOpen] = useState(false);
@@ -156,24 +146,21 @@ export default function TripsPage() {
   const activeStepIndex = STEPS.findIndex((s) => s.key === "DISPATCHED");
 
   return (
-    <motion.div
-      className="grid grid-cols-[3fr_2fr] gap-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="space-y-8">
-        <motion.div variants={itemVariants}>
-          <Label className="text-sm font-semibold text-foreground">Trip Lifecycle</Label>
-          <div className="relative mt-4">
-            <div className="absolute top-3 left-0 right-0 h-px bg-border" />
+    <div className="flex h-full">
+      <div className="w-[42%] shrink-0 overflow-y-auto p-7 pr-0">
+        <div className="pr-7">
+          <h1 className="text-lg font-bold text-foreground">Trip Lifecycle</h1>
+
+          <div className="relative mt-7">
+            <div className="absolute top-[18px] left-[18px] right-[18px] h-[2px] bg-border" />
             <motion.div
-              className="absolute top-3 left-0 h-px bg-primary"
+              className="absolute top-[18px] left-[18px] h-[2px] bg-primary"
               initial={{ width: 0 }}
               animate={{
                 width: `${(activeStepIndex / (STEPS.length - 1)) * 100}%`,
               }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{ maxWidth: `calc(100% - 36px)` }}
             />
             <div className="relative flex justify-between">
               {STEPS.map((step, i) => {
@@ -181,28 +168,26 @@ export default function TripsPage() {
                 const isPast = i < activeStepIndex;
                 return (
                   <div key={step.key} className="flex flex-col items-center">
-                    <motion.div
+                    <div
                       className={cn(
-                        "relative z-10 flex size-6 items-center justify-center rounded-full border-2 text-xs font-medium transition-colors",
+                        "relative z-10 flex size-[38px] items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
                         isActive
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-primary bg-background text-primary shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
                           : isPast
-                            ? "border-primary bg-primary/15 text-primary"
-                            : "border-border bg-card text-muted-foreground",
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-card text-muted-foreground/60",
                       )}
-                      animate={isActive ? { scale: [1, 1.15, 1] } : {}}
-                      transition={
-                        isActive
-                          ? { repeat: Infinity, duration: 2, ease: "easeInOut" }
-                          : {}
-                      }
                     >
-                      {isPast ? "\u2713" : i + 1}
-                    </motion.div>
+                      {isPast ? <Check className="size-4 stroke-[3]" /> : i + 1}
+                    </div>
                     <span
                       className={cn(
-                        "mt-2 text-xs",
-                        isActive ? "font-semibold text-foreground" : "text-muted-foreground",
+                        "mt-2.5 text-xs font-semibold",
+                        isActive
+                          ? "text-primary"
+                          : isPast
+                            ? "text-foreground"
+                            : "text-muted-foreground/60",
                       )}
                     >
                       {step.label}
@@ -212,161 +197,159 @@ export default function TripsPage() {
               })}
             </div>
           </div>
-        </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Label className="text-sm font-semibold text-foreground">Create Trip</Label>
-          <form className="mt-4 space-y-4" onSubmit={handleCreate}>
-            <div className="space-y-1.5">
-              <Label htmlFor="source" className="text-xs text-muted-foreground">
-                Source
-              </Label>
-              <Input
-                id="source"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                placeholder="City or location"
-                required
-              />
+          <div className="mt-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-foreground">Create New Trip</h2>
+              <p className="text-xs text-muted-foreground">
+                Assign vehicle and driver to start operation.
+              </p>
             </div>
+            <div className="mt-3 h-px bg-border" />
 
-            <div className="space-y-1.5">
-              <Label htmlFor="destination" className="text-xs text-muted-foreground">
-                Destination
-              </Label>
-              <Input
-                id="destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="City or location"
-                required
-              />
-            </div>
+            <form className="mt-5" onSubmit={handleCreate}>
+              <div className="grid grid-cols-2 gap-x-5 gap-y-5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Source</Label>
+                  <Input
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                    placeholder="City or location"
+                    required
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                  />
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="vehicle" className="text-xs text-muted-foreground">
-                Vehicle
-              </Label>
-              <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                <SelectTrigger id="vehicle">
-                  <SelectValue placeholder="Select vehicle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options?.vehicles.length === 0 ? (
-                    <SelectItem value="-" disabled>
-                      No available vehicles
-                    </SelectItem>
-                  ) : (
-                    options?.vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.name} ({v.regNo}) &mdash; {v.capacityKg} kg
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Destination</Label>
+                  <Input
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    placeholder="City or location"
+                    required
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                  />
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="driver" className="text-xs text-muted-foreground">
-                Driver
-              </Label>
-              <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
-                <SelectTrigger id="driver">
-                  <SelectValue placeholder="Select driver" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options?.drivers.length === 0 ? (
-                    <SelectItem value="-" disabled>
-                      No available drivers
-                    </SelectItem>
-                  ) : (
-                    options?.drivers.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Vehicle</Label>
+                  <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+                    <SelectTrigger className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-0 focus-visible:border-primary rounded-lg h-11 px-3.5">
+                      <SelectValue placeholder="Select vehicle" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-card text-foreground">
+                      {options?.vehicles.length === 0 ? (
+                        <SelectItem value="-" disabled className="text-muted-foreground/60">
+                          No available vehicles
+                        </SelectItem>
+                      ) : (
+                        options?.vehicles.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.name} ({v.regNo}) &mdash; {v.capacityKg} kg
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="cargoWeight" className="text-xs text-muted-foreground">
-                Cargo Weight (kg)
-              </Label>
-              <Input
-                id="cargoWeight"
-                type="number"
-                min="1"
-                value={cargoWeightKg}
-                onChange={(e) => setCargoWeightKg(e.target.value)}
-                placeholder="e.g. 450"
-                required
-              />
-            </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Driver</Label>
+                  <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
+                    <SelectTrigger className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-0 focus-visible:border-primary rounded-lg h-11 px-3.5">
+                      <SelectValue placeholder="Select driver" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-card text-foreground">
+                      {options?.drivers.length === 0 ? (
+                        <SelectItem value="-" disabled className="text-muted-foreground/60">
+                          No available drivers
+                        </SelectItem>
+                      ) : (
+                        options?.drivers.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="plannedDistance" className="text-xs text-muted-foreground">
-                Distance (km)
-              </Label>
-              <Input
-                id="plannedDistance"
-                type="number"
-                min="1"
-                value={plannedDistanceKm}
-                onChange={(e) => setPlannedDistanceKm(e.target.value)}
-                placeholder="e.g. 200"
-                required
-              />
-            </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Cargo Weight (kg)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={cargoWeightKg}
+                    onChange={(e) => setCargoWeightKg(e.target.value)}
+                    placeholder="e.g. 450"
+                    required
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                  />
+                </div>
 
-            <AnimatePresence>
-              {capacityExceeded && selectedVehicle ? (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginTop: 0 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="overflow-hidden"
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-foreground">Distance (km)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={plannedDistanceKm}
+                    onChange={(e) => setPlannedDistanceKm(e.target.value)}
+                    placeholder="e.g. 200"
+                    required
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                  />
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {capacityExceeded && selectedVehicle ? (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="mt-4 overflow-hidden"
+                  >
+                    <div className="rounded-lg border border-border bg-card p-3">
+                      <p className="text-sm font-medium text-destructive">
+                        Capacity exceeded by {excessKg} kg
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        The selected vehicle&apos;s maximum capacity is{" "}
+                        {selectedVehicle.capacityKg} kg. Please choose a larger vehicle.
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+
+              <div className="mt-6 flex gap-3">
+                <Button
+                  type="submit"
+                  disabled={!formValid || isSubmitting}
+                  className="flex-1 rounded-lg py-3 text-sm font-semibold disabled:opacity-40 h-[46px]"
                 >
-                  <div className="border border-destructive/40 bg-destructive/10 p-3">
-                    <p className="text-sm font-medium text-destructive">
-                      Capacity exceeded by {excessKg} kg
-                    </p>
-                    <p className="mt-0.5 text-xs text-destructive/80">
-                      The selected vehicle&apos;s maximum capacity is {selectedVehicle.capacityKg} kg.
-                    </p>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-
-            <div className="flex gap-3">
-              <Button type="submit" className="flex-1" disabled={!formValid || isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Trip"}
-              </Button>
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </motion.div>
+                  {isSubmitting ? "Creating..." : "Create Trip"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="rounded-lg px-6 text-sm font-medium h-[46px]"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
-      <motion.div variants={itemVariants}>
-        {loading && items.length === 0 ? (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-24" />
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-3 w-40" />
-                <Skeleton className="h-5 w-16" />
-              </div>
-            ))}
-          </div>
-        ) : (
+      <div className="w-px shrink-0 bg-border" />
+
+      <div className="flex-1 overflow-y-auto p-7 pl-0">
+        <div className="pl-7">
           <LiveBoard
             trips={items}
             onDispatch={handleDispatch}
@@ -379,8 +362,8 @@ export default function TripsPage() {
               setCancelOpen(true);
             }}
           />
-        )}
-      </motion.div>
+        </div>
+      </div>
 
       <CompleteTripDialog
         open={completeOpen}
@@ -403,6 +386,6 @@ export default function TripsPage() {
         onConfirm={handleCancel}
         isLoading={isSubmitting}
       />
-    </motion.div>
+    </div>
   );
 }
