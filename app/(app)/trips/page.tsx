@@ -146,15 +146,15 @@ export default function TripsPage() {
   const activeStepIndex = STEPS.findIndex((s) => s.key === "DISPATCHED");
 
   return (
-    <div className="flex h-full bg-[#0A0A0F]">
+    <div className="flex h-full">
       <div className="w-[42%] shrink-0 overflow-y-auto p-7 pr-0">
         <div className="pr-7">
-          <h1 className="text-lg font-bold text-[#F2F2F5]">Trip Lifecycle</h1>
+          <h1 className="text-lg font-bold text-foreground">Trip Lifecycle</h1>
 
           <div className="relative mt-7">
-            <div className="absolute top-[18px] left-[18px] right-[18px] h-[2px] bg-[#26262F]" />
+            <div className="absolute top-[18px] left-[18px] right-[18px] h-[2px] bg-border" />
             <motion.div
-              className="absolute top-[18px] left-[18px] h-[2px] bg-[#3D5AFE]"
+              className="absolute top-[18px] left-[18px] h-[2px] bg-primary"
               initial={{ width: 0 }}
               animate={{
                 width: `${(activeStepIndex / (STEPS.length - 1)) * 100}%`,
@@ -172,10 +172,10 @@ export default function TripsPage() {
                       className={cn(
                         "relative z-10 flex size-[38px] items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
                         isActive
-                          ? "border-[#3D5AFE] bg-[#0A0A0F] text-[#3D5AFE] shadow-[0_0_12px_rgba(61,90,254,0.25)]"
+                          ? "border-primary bg-background text-primary shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
                           : isPast
-                            ? "border-[#3D5AFE] bg-[#3D5AFE] text-white"
-                            : "border-[#26262F] bg-[#15151C] text-[#5C5C66]",
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-card text-muted-foreground/60",
                       )}
                     >
                       {isPast ? <Check className="size-4 stroke-[3]" /> : i + 1}
@@ -184,10 +184,10 @@ export default function TripsPage() {
                       className={cn(
                         "mt-2.5 text-xs font-semibold",
                         isActive
-                          ? "text-[#3D5AFE]"
+                          ? "text-primary"
                           : isPast
-                            ? "text-[#F2F2F5]"
-                            : "text-[#5C5C66]",
+                            ? "text-foreground"
+                            : "text-muted-foreground/60",
                       )}
                     >
                       {step.label}
@@ -200,46 +200,46 @@ export default function TripsPage() {
 
           <div className="mt-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#F2F2F5]">Create New Trip</h2>
-              <p className="text-xs text-[#8A8A96]">
+              <h2 className="text-base font-bold text-foreground">Create New Trip</h2>
+              <p className="text-xs text-muted-foreground">
                 Assign vehicle and driver to start operation.
               </p>
             </div>
-            <div className="mt-3 h-px bg-[#26262F]" />
+            <div className="mt-3 h-px bg-border" />
 
             <form className="mt-5" onSubmit={handleCreate}>
               <div className="grid grid-cols-2 gap-x-5 gap-y-5">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Source</Label>
+                  <Label className="text-xs font-medium text-foreground">Source</Label>
                   <Input
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                     placeholder="City or location"
                     required
-                    className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus-visible:border-[#3D5AFE] focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Destination</Label>
+                  <Label className="text-xs font-medium text-foreground">Destination</Label>
                   <Input
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     placeholder="City or location"
                     required
-                    className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus-visible:border-[#3D5AFE] focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Vehicle</Label>
+                  <Label className="text-xs font-medium text-foreground">Vehicle</Label>
                   <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                    <SelectTrigger className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus:ring-0 focus-visible:border-[#3D5AFE] rounded-lg h-11 px-3.5">
+                    <SelectTrigger className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-0 focus-visible:border-primary rounded-lg h-11 px-3.5">
                       <SelectValue placeholder="Select vehicle" />
                     </SelectTrigger>
-                    <SelectContent className="border-[#26262F] bg-[#15151C] text-[#F2F2F5]">
+                    <SelectContent className="border-border bg-card text-foreground">
                       {options?.vehicles.length === 0 ? (
-                        <SelectItem value="-" disabled className="text-[#5C5C66]">
+                        <SelectItem value="-" disabled className="text-muted-foreground/60">
                           No available vehicles
                         </SelectItem>
                       ) : (
@@ -254,14 +254,14 @@ export default function TripsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Driver</Label>
+                  <Label className="text-xs font-medium text-foreground">Driver</Label>
                   <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
-                    <SelectTrigger className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus:ring-0 focus-visible:border-[#3D5AFE] rounded-lg h-11 px-3.5">
+                    <SelectTrigger className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus:ring-0 focus-visible:border-primary rounded-lg h-11 px-3.5">
                       <SelectValue placeholder="Select driver" />
                     </SelectTrigger>
-                    <SelectContent className="border-[#26262F] bg-[#15151C] text-[#F2F2F5]">
+                    <SelectContent className="border-border bg-card text-foreground">
                       {options?.drivers.length === 0 ? (
-                        <SelectItem value="-" disabled className="text-[#5C5C66]">
+                        <SelectItem value="-" disabled className="text-muted-foreground/60">
                           No available drivers
                         </SelectItem>
                       ) : (
@@ -276,7 +276,7 @@ export default function TripsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Cargo Weight (kg)</Label>
+                  <Label className="text-xs font-medium text-foreground">Cargo Weight (kg)</Label>
                   <Input
                     type="number"
                     min="1"
@@ -284,12 +284,12 @@ export default function TripsPage() {
                     onChange={(e) => setCargoWeightKg(e.target.value)}
                     placeholder="e.g. 450"
                     required
-                    className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus-visible:border-[#3D5AFE] focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-[#F2F2F5]">Distance (km)</Label>
+                  <Label className="text-xs font-medium text-foreground">Distance (km)</Label>
                   <Input
                     type="number"
                     min="1"
@@ -297,7 +297,7 @@ export default function TripsPage() {
                     onChange={(e) => setPlannedDistanceKm(e.target.value)}
                     placeholder="e.g. 200"
                     required
-                    className="border-[#26262F] bg-[#15151C] text-sm text-[#F2F2F5] placeholder:text-[#5C5C66] focus-visible:border-[#3D5AFE] focus-visible:ring-0 rounded-lg h-11 px-3.5"
+                    className="border-border bg-card text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 rounded-lg h-11 px-3.5"
                   />
                 </div>
               </div>
@@ -311,11 +311,11 @@ export default function TripsPage() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="mt-4 overflow-hidden"
                   >
-                    <div className="rounded-lg border border-[#26262F] bg-[#15151C] p-3">
-                      <p className="text-sm font-medium text-red-400">
+                    <div className="rounded-lg border border-border bg-card p-3">
+                      <p className="text-sm font-medium text-destructive">
                         Capacity exceeded by {excessKg} kg
                       </p>
-                      <p className="mt-0.5 text-xs text-[#8A8A96]">
+                      <p className="mt-0.5 text-xs text-muted-foreground">
                         The selected vehicle&apos;s maximum capacity is{" "}
                         {selectedVehicle.capacityKg} kg. Please choose a larger vehicle.
                       </p>
@@ -328,7 +328,7 @@ export default function TripsPage() {
                 <Button
                   type="submit"
                   disabled={!formValid || isSubmitting}
-                  className="flex-1 rounded-lg bg-[#3D5AFE] py-3 text-sm font-semibold text-white hover:bg-[#4C6FFF] disabled:opacity-40 h-[46px]"
+                  className="flex-1 rounded-lg py-3 text-sm font-semibold disabled:opacity-40 h-[46px]"
                 >
                   {isSubmitting ? "Creating..." : "Create Trip"}
                 </Button>
@@ -336,7 +336,7 @@ export default function TripsPage() {
                   type="button"
                   variant="outline"
                   onClick={resetForm}
-                  className="rounded-lg border-[#26262F] bg-[#1C1C24] px-6 text-sm font-medium text-[#F2F2F5] hover:bg-[#26262F] h-[46px]"
+                  className="rounded-lg px-6 text-sm font-medium h-[46px]"
                 >
                   Cancel
                 </Button>
@@ -346,7 +346,7 @@ export default function TripsPage() {
         </div>
       </div>
 
-      <div className="w-px shrink-0 bg-[#26262F]" />
+      <div className="w-px shrink-0 bg-border" />
 
       <div className="flex-1 overflow-y-auto p-7 pl-0">
         <div className="pl-7">

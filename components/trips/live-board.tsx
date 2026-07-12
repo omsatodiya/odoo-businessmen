@@ -20,19 +20,19 @@ interface LiveBoardTrip {
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   COMPLETED: {
     label: "Completed",
-    className: "bg-[rgba(34,197,94,0.12)] text-[#22C55E]",
+    className: "bg-success/10 text-success",
   },
   DISPATCHED: {
     label: "Dispatched",
-    className: "bg-[rgba(61,90,254,0.12)] text-[#3D5AFE]",
+    className: "bg-primary/10 text-primary",
   },
   DRAFT: {
     label: "Draft",
-    className: "bg-[rgba(255,255,255,0.06)] text-[#A0A0AA]",
+    className: "bg-muted text-muted-foreground",
   },
   CANCELLED: {
     label: "Cancelled",
-    className: "bg-[rgba(239,68,68,0.12)] text-[#EF4444]",
+    className: "bg-destructive/10 text-destructive",
   },
 };
 
@@ -52,20 +52,20 @@ export function LiveBoard({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-[#F2F2F5]">Live Board</h2>
+        <h2 className="text-base font-bold text-foreground">Live Board</h2>
         <div className="flex items-center gap-1.5">
           <span className="relative flex size-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22C55E] opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-[#22C55E]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-success" />
           </span>
-          <span className="text-[10px] font-semibold tracking-wider text-[#22C55E]">
+          <span className="text-[10px] font-semibold tracking-wider text-success">
             REAL-TIME SYNC
           </span>
         </div>
       </div>
 
       {active.length === 0 ? (
-        <p className="mt-6 text-sm text-[#5C5C66]">
+        <p className="mt-6 text-sm text-muted-foreground/60">
           No trips yet. Create your first one.
         </p>
       ) : (
@@ -82,19 +82,19 @@ export function LiveBoard({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.98 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="rounded-xl border border-[#26262F] bg-[#15151C] p-4"
+                    className="rounded-xl border border-border bg-card p-4"
                   >
                     <div className="flex items-start justify-between">
-                      <p className="text-sm font-bold text-[#F2F2F5]">{trip.code}</p>
-                      <p className="text-xs text-[#8A8A96]">
+                      <p className="text-sm font-bold text-foreground">{trip.code}</p>
+                      <p className="text-xs text-muted-foreground">
                         {trip.driver.name} | {trip.vehicle.name}
                       </p>
                     </div>
                     <div className="mt-1 flex items-start justify-between">
-                      <p className="text-sm text-[#F2F2F5]">
+                      <p className="text-sm text-foreground">
                         {trip.source} &rarr; {trip.destination}
                       </p>
-                      <p className="text-xs text-[#5C5C66]">
+                      <p className="text-xs text-muted-foreground/60">
                         {formatDistanceToNow(new Date(trip.createdAt), { addSuffix: true })}
                       </p>
                     </div>
@@ -111,8 +111,9 @@ export function LiveBoard({
                         {trip.status === "DRAFT" && (
                           <Button
                             size="sm"
+                            variant="outline"
                             onClick={() => onDispatch(trip.id)}
-                            className="rounded-lg border border-[#26262F] bg-[#1C1C24] px-3 py-1 text-xs font-medium text-[#F2F2F5] hover:bg-[#26262F] h-8"
+                            className="rounded-lg px-3 py-1 text-xs font-medium h-8"
                           >
                             Dispatch
                           </Button>
@@ -121,8 +122,9 @@ export function LiveBoard({
                           <>
                             <Button
                               size="sm"
+                              variant="outline"
                               onClick={() => onComplete(trip.id)}
-                              className="rounded-lg border border-[#26262F] bg-[#1C1C24] px-3 py-1 text-xs font-medium text-[#F2F2F5] hover:bg-[#26262F] h-8"
+                              className="rounded-lg px-3 py-1 text-xs font-medium h-8"
                             >
                               Complete
                             </Button>
@@ -144,15 +146,15 @@ export function LiveBoard({
             </AnimatePresence>
           </div>
 
-          <div className="mt-5 border-t border-[#26262F] pt-4">
+          <div className="mt-5 border-t border-border pt-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#8A8A96]">
+              <p className="text-xs text-muted-foreground">
                 Showing {active.length} active trip{active.length !== 1 ? "s" : ""}.
               </p>
               <button
                 type="button"
                 onClick={() => toast.info("History view coming soon.")}
-                className="text-xs font-medium text-[#3D5AFE] hover:underline"
+                className="text-xs font-medium text-primary hover:underline"
               >
                 View History
               </button>
