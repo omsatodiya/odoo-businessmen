@@ -19,6 +19,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { FilterBar, FilterSearchInput } from "@/components/shared/filter-bar";
 import { FormModal } from "@/components/shared/form-modal";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { LiveBoard } from "@/components/trips/live-board";
+import { CompleteTripDialog } from "@/components/trips/complete-trip-dialog";
 import { useTripStore } from "@/store/trip-slice";
 import type { Trip } from "@prisma/client";
 
@@ -29,42 +32,14 @@ interface TripRow extends Trip {
   driver: { name: string };
 }
 
-const columns: ColumnDef<TripRow>[] = [
-  { header: "Code", accessorKey: "code", className: "font-mono" },
-  { header: "Source", accessorKey: "source" },
-  { header: "Destination", accessorKey: "destination" },
-  {
-    header: "Vehicle",
-    cell: (trip) => `${trip.vehicle.name} (${trip.vehicle.regNo})`,
-  },
-  { header: "Driver", accessorKey: "driver.name" },
-  {
-    header: "Cargo",
-    accessorKey: "cargoWeightKg",
-    className: "font-mono tabular-nums",
-    cell: (trip) => `${trip.cargoWeightKg} kg`,
-  },
-  {
-    header: "Distance",
-    accessorKey: "plannedDistanceKm",
-    className: "font-mono tabular-nums",
-    cell: (trip) => `${trip.plannedDistanceKm} km`,
-  },
-  {
-    header: "Status",
-    cell: (trip) => <StatusBadge status={trip.status} />,
-  },
-  {
-    header: "Actions",
-    className: "w-32",
-    cell: () => null,
-  },
-];
-
 export default function TripsPage() {
-  const { items, options, loading, filters, fetch, fetchOptions, create, setFilter } = useTripStore();
+  const { items, options, loading, filters, fetch, fetchOptions, create, dispatch, complete, cancel, setFilter } =
+    useTripStore();
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [source, setSource] = useState("");
@@ -83,6 +58,11 @@ export default function TripsPage() {
     fetch();
     fetchOptions();
   }, [fetch, fetchOptions]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetch(), 300);
+    return () => clearTimeout(timer);
+  }, [filters, fetch]);
 
   function resetForm() {
     setSource("");
@@ -117,24 +97,121 @@ export default function TripsPage() {
     }
   }
 
+  async function handleDispatch(id: string) {
+    try {
+      await dispatch(id);
+      toast.success("Trip dispatched");
+      fetch();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function handleComplete(endOdometer: number, fuelConsumedL?: number, revenue?: number) {
+    if (!selectedTripId) return;
+    try {
+      await complete(selectedTripId, { endOdometer, fuelConsumedL, revenue });
+      toast.success("Trip completed");
+      setSelectedTripId(null);
+      fetch();
+    } catch (err) {
+      toast.error((err as Error).message);
+      throw err;
+    }
+  }
+
+  async function handleCancel() {
+    if (!selectedTripId) return;
+    setIsSubmitting(true);
+    try {
+      await cancel(selectedTripId, "Cancelled by dispatcher");
+      toast.success("Trip cancelled");
+      setCancelOpen(false);
+      setSelectedTripId(null);
+      fetch();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const handleSearch = useCallback(
-    (value: string) => {
-      setFilter("q", value || undefined);
-    },
+    (value: string) => setFilter("q", value || undefined),
     [setFilter],
   );
 
   const handleStatusFilter = useCallback(
-    (value: string) => {
-      setFilter("status", value === "ALL" ? undefined : value);
-    },
+    (value: string) => setFilter("status", value === "ALL" ? undefined : value),
     [setFilter],
   );
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetch(), 300);
-    return () => clearTimeout(timer);
-  }, [filters, fetch]);
+  const selectedTrip = items.find((t) => t.id === selectedTripId);
+  const cancelReason = selectedTrip?.status === "DISPATCHED"
+    ? "This will restore the vehicle and driver to Available."
+    : "The trip will be discarded.";
+
+  const columns: ColumnDef<TripRow>[] = [
+    { header: "Code", accessorKey: "code", className: "font-mono" },
+    { header: "Source", accessorKey: "source" },
+    { header: "Destination", accessorKey: "destination" },
+    {
+      header: "Vehicle",
+      cell: (trip) => `${trip.vehicle.name} (${trip.vehicle.regNo})`,
+    },
+    { header: "Driver", cell: (trip) => trip.driver.name },
+    {
+      header: "Cargo",
+      className: "font-mono tabular-nums",
+      cell: (trip) => `${trip.cargoWeightKg} kg`,
+    },
+    {
+      header: "Distance",
+      className: "font-mono tabular-nums",
+      cell: (trip) => `${trip.plannedDistanceKm} km`,
+    },
+    {
+      header: "Status",
+      cell: (trip) => <StatusBadge status={trip.status} />,
+    },
+    {
+      header: "",
+      className: "w-40",
+      cell: (trip) => (
+        <div className="flex gap-1">
+          {trip.status === "DRAFT" && (
+            <Button size="sm" variant="outline" onClick={() => handleDispatch(trip.id)}>
+              Dispatch
+            </Button>
+          )}
+          {trip.status === "DISPATCHED" && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedTripId(trip.id);
+                  setCompleteOpen(true);
+                }}
+              >
+                Complete
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  setSelectedTripId(trip.id);
+                  setCancelOpen(true);
+                }}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -170,13 +247,31 @@ export default function TripsPage() {
         />
       </FilterBar>
 
-      <DataTable<TripRow>
-        columns={columns}
-        data={items as TripRow[]}
-        isLoading={loading}
-        emptyMessage="No trips yet — create your first one."
-        getRowKey={(row) => row.id}
-      />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <DataTable<TripRow>
+            columns={columns}
+            data={items as TripRow[]}
+            isLoading={loading}
+            emptyMessage="No trips yet — create your first one."
+            getRowKey={(row) => row.id}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <LiveBoard
+            trips={items as TripRow[]}
+            onDispatch={handleDispatch}
+            onComplete={(id) => {
+              setSelectedTripId(id);
+              setCompleteOpen(true);
+            }}
+            onCancel={(id) => {
+              setSelectedTripId(id);
+              setCancelOpen(true);
+            }}
+          />
+        </div>
+      </div>
 
       <FormModal
         open={createOpen}
@@ -263,6 +358,28 @@ export default function TripsPage() {
           />
         </div>
       </FormModal>
+
+      <CompleteTripDialog
+        open={completeOpen}
+        onOpenChange={(open) => {
+          if (!open) setSelectedTripId(null);
+          setCompleteOpen(open);
+        }}
+        onComplete={handleComplete}
+      />
+
+      <ConfirmDialog
+        open={cancelOpen}
+        onOpenChange={(open) => {
+          if (!open) setSelectedTripId(null);
+          setCancelOpen(open);
+        }}
+        title="Cancel Trip"
+        description={`Are you sure you want to cancel trip ${selectedTrip?.code ?? ""}? ${cancelReason}`}
+        confirmLabel="Cancel Trip"
+        onConfirm={handleCancel}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }
