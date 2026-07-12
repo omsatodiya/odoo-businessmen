@@ -329,8 +329,8 @@ export default function FuelExpensesPage() {
         </div>
       </div>
 
-      <LogFuelModal key={String(logFuelOpen)} open={logFuelOpen} onOpenChange={setLogFuelOpen} />
-      <AddExpenseModal key={String(addExpenseOpen)} open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
+      <LogFuelModal key={`fuel-${logFuelOpen}`} open={logFuelOpen} onOpenChange={setLogFuelOpen} />
+      <AddExpenseModal key={`expense-${addExpenseOpen}`} open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
     </div>
   );
 }

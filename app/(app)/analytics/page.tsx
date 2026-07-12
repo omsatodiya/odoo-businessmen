@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from "recharts";
+import { Download } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { KpiCard } from "@/components/shared/kpi-card";
+import { Button } from "@/components/ui/button";
 import { useAnalyticsStore } from "@/store/analytics-slice";
 
 export default function AnalyticsPage() {
@@ -43,59 +46,42 @@ export default function AnalyticsPage() {
         title="Reports &amp; Analytics"
         description="Fleet-wide performance metrics, costs, and revenue analysis."
         actions={
-          <a
-            href="/api/analytics/export"
-            download
-            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-          >
-            Export CSV
-          </a>
+          <Button asChild variant="outline" size="sm" className="h-8 cursor-pointer text-xs font-semibold">
+            <a href="/api/analytics/export" download>
+              <Download className="mr-1.5 size-3.5" />
+              Export CSV
+            </a>
+          </Button>
         }
       />
 
-      <div className="flex gap-4">
-        <div className="flex-1 border border-border bg-card p-4">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Fuel Efficiency
-          </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-foreground">
-            {avgFuelEfficiency.toFixed(2)}
-            <span className="text-lg text-muted-foreground"> km/L</span>
-          </p>
-        </div>
-        <div className="flex-1 border border-border bg-card p-4">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Fleet Utilization
-          </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-foreground">
-            {fleetUtilization.toFixed(1)}
-            <span className="text-lg text-muted-foreground">%</span>
-          </p>
-        </div>
-        <div className="flex-1 border border-border bg-card p-4">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Operational Cost
-          </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-foreground">
-            ₹{totalOperationalCost.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-          </p>
-        </div>
-        <div className="flex-1 border border-border bg-card p-4">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Vehicle ROI
-          </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-foreground">
-            {avgRoi.toFixed(2)}
-            <span className="text-lg text-muted-foreground">%</span>
-          </p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard
+          label="Fuel Efficiency"
+          value={avgFuelEfficiency.toFixed(2)}
+          unit=" km/L"
+        />
+        <KpiCard
+          label="Fleet Utilization"
+          value={fleetUtilization.toFixed(1)}
+          unit="%"
+        />
+        <KpiCard
+          label="Operational Cost"
+          value={`₹${totalOperationalCost.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+        />
+        <KpiCard
+          label="Vehicle ROI"
+          value={avgRoi.toFixed(2)}
+          unit="%"
+        />
       </div>
 
       <p className="text-xs text-muted-foreground">
         ROI = (Revenue - Operational Cost) / Acquisition Cost × 100
       </p>
 
-      <div className="grid grid-cols-[2fr_1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         <div className="border border-border bg-card p-4">
           <h2 className="mb-4 text-sm font-semibold">Monthly Revenue</h2>
           {loading ? (
@@ -108,10 +94,44 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyRevenue} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                  <XAxis dataKey="month" hide />
-                  <YAxis hide />
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <BarChart data={monthlyRevenue} margin={{ top: 10, right: 10, left: 15, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    dy={8}
+                    className="font-mono text-[10px] text-muted-foreground"
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-8}
+                    className="font-mono text-[10px] text-muted-foreground"
+                    tickFormatter={(val) => {
+                      if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+                      if (val >= 1000) return `₹${(val / 1000).toFixed(0)}K`;
+                      return `₹${val}`;
+                    }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload as { month: string; revenue: number };
+                        return (
+                          <div className="border border-border bg-card p-2 text-xs font-mono shadow-md select-none">
+                            <p className="font-semibold text-foreground uppercase tracking-wide mb-1">{data.month}</p>
+                            <p className="text-muted-foreground">
+                              Revenue: <span className="text-foreground font-semibold">₹{data.revenue.toLocaleString("en-IN")}</span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                    cursor={{ fill: "var(--muted)", opacity: 0.15 }}
+                  />
                   <Bar dataKey="revenue" fill="var(--color-chart-1)" radius={0} />
                 </BarChart>
               </ResponsiveContainer>
@@ -132,13 +152,18 @@ export default function AnalyticsPage() {
           ) : (
             <div className="space-y-4">
               {topCostliest.map((v) => (
-                <div key={v.vehicleId} className="space-y-1.5">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-foreground">
-                      {v.regNo} — {v.name}
+                <div key={v.vehicleId} className="space-y-2">
+                  <div className="flex justify-between text-xs sm:text-sm">
+                    <span className="font-semibold text-foreground">
+                      <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground mr-1.5">{v.regNo}</span>
+                      <span className="text-muted-foreground">—</span>
+                      <span className="ml-1.5">{v.name}</span>
+                    </span>
+                    <span className="font-mono font-bold text-foreground">
+                      ₹{v.operationalCost.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                     </span>
                   </div>
-                  <div className="h-2 w-full bg-muted">
+                  <div className="h-2 w-full bg-muted border border-border/10">
                     <div
                       className="h-full bg-chart-3"
                       style={{ width: `${(v.operationalCost / maxCost) * 100}%` }}

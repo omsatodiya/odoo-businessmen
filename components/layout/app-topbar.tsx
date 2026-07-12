@@ -9,8 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useUiStore } from "@/store/ui-slice";
+import { CommandMenu } from "@/components/layout/command-menu";
+import type { Access, Resource } from "@/lib/rbac";
 
-export function AppTopbar({ user }: { user: { name: string; role: Role } }) {
+export function AppTopbar({
+  user,
+  permissions,
+}: {
+  user: { name: string; role: Role };
+  permissions: Record<Resource, Access>;
+}) {
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -25,9 +33,9 @@ export function AppTopbar({ user }: { user: { name: string; role: Role } }) {
         <Menu className="size-4" />
       </Button>
 
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-sm cursor-pointer" onClick={() => setOpen(true)}>
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search across fleet..." className="pl-8 bg-card/40 border-border" disabled />
+        <Input placeholder="Search across fleet... (Ctrl+K)" className="pl-8 bg-card/40 border-border cursor-pointer" readOnly />
       </div>
 
       <div className="ml-auto flex items-center gap-4">
@@ -53,6 +61,8 @@ export function AppTopbar({ user }: { user: { name: string; role: Role } }) {
         </Button>
         <UserMenu user={user} />
       </div>
+
+      <CommandMenu open={open} onOpenChange={setOpen} permissions={permissions} />
     </header>
   );
 }
