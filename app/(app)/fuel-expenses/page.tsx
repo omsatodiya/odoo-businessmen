@@ -164,7 +164,14 @@ export default function FuelExpensesPage() {
         title="Fuel & Expense Management"
         description="Monitor operational costs, fuel efficiency, and fleet expenses."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <a
+              href={`/api/fuel-expenses/export?vehicleId=${filters.vehicleId}`}
+              download
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground cursor-pointer"
+            >
+              Export CSV
+            </a>
             <Button
               onClick={() => setLogFuelOpen(true)}
               className="bg-primary hover:bg-primary/95 text-primary-foreground font-medium h-9 gap-1.5"
