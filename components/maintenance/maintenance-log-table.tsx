@@ -108,26 +108,28 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
 
   if (isFullAccess) {
     columns.push({
-      header: "Actions",
+      header: <span className="pr-6 block">Actions</span>,
       className: "text-right w-28",
       cell: (log) => {
         if (log.status !== "ACTIVE") return null;
         const isClosing = closingId === log.id;
         return (
-          <Button
-            size="xs"
-            variant="outline"
-            className="h-7 text-xs border-chart-2/40 hover:bg-chart-2/10 hover:text-chart-2"
-            onClick={() => handleComplete(log.id)}
-            disabled={isClosing}
-          >
-            {isClosing ? (
-              <Loader2 className="size-3 animate-spin mr-1" />
-            ) : (
-              <Check className="size-3 mr-1" />
-            )}
-            Complete
-          </Button>
+          <div className="flex items-center justify-end">
+            <Button
+              size="xs"
+              variant="outline"
+              className="h-7 text-xs border-chart-2/40 hover:bg-chart-2/10 hover:text-chart-2"
+              onClick={() => handleComplete(log.id)}
+              disabled={isClosing}
+            >
+              {isClosing ? (
+                <Loader2 className="size-3 animate-spin mr-1" />
+              ) : (
+                <Check className="size-3 mr-1" />
+              )}
+              Complete
+            </Button>
+          </div>
         );
       },
     });
