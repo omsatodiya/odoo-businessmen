@@ -212,5 +212,6 @@ model AppSettings {
   depotName    String   @default("Gandhinagar Depot GJ-14")
   currency     String   @default("INR")
   distanceUnit String   @default("Kilometers")
+  rbacMatrix   Json?
   updatedAt    DateTime @updatedAt
 }

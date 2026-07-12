@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { can } from "@/lib/rbac";
+import { can, getRbacMatrix } from "@/lib/rbac";
 import { PageHeader } from "@/components/shared/page-header";
 import { MaintenanceForm } from "@/components/maintenance/maintenance-form";
 import { MaintenanceLogTable } from "@/components/maintenance/maintenance-log-table";
@@ -11,8 +11,10 @@ export default async function MaintenancePage() {
     redirect("/login");
   }
 
+  const matrix = await getRbacMatrix();
+
   // Ensure role has at least VIEW access to FLEET resource
-  if (!can(session.role, "FLEET", "VIEW")) {
+  if (!can(matrix, session.role, "FLEET", "VIEW")) {
     return (
       <div className="flex h-[50vh] flex-col items-center justify-center gap-2">
         <h1 className="text-xl font-semibold text-destructive">Access Denied</h1>
@@ -23,7 +25,7 @@ export default async function MaintenancePage() {
     );
   }
 
-  const isFullAccess = can(session.role, "FLEET", "FULL");
+  const isFullAccess = can(matrix, session.role, "FLEET", "FULL");
 
   return (
     <div className="space-y-6">
@@ -39,12 +41,12 @@ export default async function MaintenancePage() {
               <MaintenanceForm />
             </div>
             <div className="lg:col-span-2">
-              <MaintenanceLogTable role={session.role} />
+              <MaintenanceLogTable isFullAccess={isFullAccess} />
             </div>
           </>
         ) : (
           <div className="lg:col-span-3">
-            <MaintenanceLogTable role={session.role} />
+            <MaintenanceLogTable isFullAccess={isFullAccess} />
           </div>
         )}
       </div>

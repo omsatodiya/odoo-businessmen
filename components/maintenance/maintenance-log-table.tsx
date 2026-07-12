@@ -5,17 +5,15 @@ import { useMaintenanceStore, MaintenanceLogWithVehicle } from "@/store/maintena
 import { DataTable, ColumnDef } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import { can } from "@/lib/rbac";
-import { Role } from "@prisma/client";
 import { toast } from "sonner";
 import { Check, Loader2, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface MaintenanceLogTableProps {
-  role: Role;
+  isFullAccess: boolean;
 }
 
-export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
+export function MaintenanceLogTable({ isFullAccess }: MaintenanceLogTableProps) {
   const { items, fetch: fetchLogs, loading, closeLog, deleteLog } = useMaintenanceStore();
   const [closingId, setClosingId] = useState<string | null>(null);
 
@@ -26,8 +24,6 @@ export function MaintenanceLogTable({ role }: MaintenanceLogTableProps) {
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
-
-  const isFullAccess = can(role, "FLEET", "FULL");
 
   const handleComplete = async (logId: string) => {
     setClosingId(logId);

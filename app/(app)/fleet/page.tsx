@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { can } from "@/lib/rbac";
+import { can, getRbacMatrix } from "@/lib/rbac";
 import { FleetRegistryClient } from "./fleet-registry-client";
 
 export default async function FleetPage() {
@@ -9,8 +9,10 @@ export default async function FleetPage() {
     redirect("/login");
   }
 
+  const matrix = await getRbacMatrix();
+
   // Ensure role has at least VIEW access to FLEET resource
-  if (!can(session.role, "FLEET", "VIEW")) {
+  if (!can(matrix, session.role, "FLEET", "VIEW")) {
     return (
       <div className="flex h-[50vh] flex-col items-center justify-center gap-2">
         <h1 className="text-xl font-semibold text-destructive">Access Denied</h1>
@@ -21,5 +23,7 @@ export default async function FleetPage() {
     );
   }
 
-  return <FleetRegistryClient role={session.role} />;
+  const isFullAccess = can(matrix, session.role, "FLEET", "FULL");
+
+  return <FleetRegistryClient isFullAccess={isFullAccess} />;
 }

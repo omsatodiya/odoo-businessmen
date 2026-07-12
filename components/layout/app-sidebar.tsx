@@ -13,11 +13,10 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import type { Role } from "@prisma/client";
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { can, type Resource } from "@/lib/rbac";
+import type { Access, Resource } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui-slice";
 
@@ -39,12 +38,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings, resource: "SETTINGS" },
 ];
 
-export function AppSidebar({ role }: { role: Role }) {
+export function AppSidebar({ permissions }: { permissions: Record<Resource, Access> }) {
   const pathname = usePathname();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
 
-  const items = NAV_ITEMS.filter((item) => can(role, item.resource, "VIEW"));
+  const items = NAV_ITEMS.filter((item) => permissions[item.resource] !== "NONE");
 
   return (
     <>

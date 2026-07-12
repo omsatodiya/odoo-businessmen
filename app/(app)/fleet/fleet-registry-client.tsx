@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Role } from "@prisma/client";
 import { Edit2, Trash2 } from "lucide-react";
 import { Vehicle } from "@prisma/client";
 
-import { can } from "@/lib/rbac";
 import { useVehicleStore } from "@/store/vehicle-slice";
 import { PageHeader } from "@/components/shared/page-header";
 import { FilterBar, FilterSearchInput } from "@/components/shared/filter-bar";
@@ -23,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-export function FleetRegistryClient({ role }: { role: Role }) {
+export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean }) {
   const { items, loading, filters, fetch, setFilter, update } = useVehicleStore();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -32,8 +30,6 @@ export function FleetRegistryClient({ role }: { role: Role }) {
   const [retireOpen, setRetireOpen] = useState(false);
   const [vehicleToRetire, setVehicleToRetire] = useState<Vehicle | null>(null);
   const [isRetiring, setIsRetiring] = useState(false);
-
-  const isFullAccess = can(role, "FLEET", "FULL");
 
   useEffect(() => {
     void fetch();

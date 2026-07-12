@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { Api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { getRbacMatrix } from "@/lib/rbac";
 import { AuthError, requireAccess } from "@/lib/session";
 import { updateSettingsSchema } from "@/types/settings-types";
 
@@ -19,13 +20,16 @@ export async function GET() {
 
     // Self-healing: create the singleton row with defaults if it's missing
     // (e.g. a fresh/wiped database) instead of erroring.
-    const settings = await prisma.appSettings.upsert({
-      where: { id: "singleton" },
-      update: {},
-      create: DEFAULT_SETTINGS,
-    });
+    const [settings, rbacMatrix] = await Promise.all([
+      prisma.appSettings.upsert({
+        where: { id: "singleton" },
+        update: {},
+        create: DEFAULT_SETTINGS,
+      }),
+      getRbacMatrix(),
+    ]);
 
-    return Api.ok(settings);
+    return Api.ok({ ...settings, rbacMatrix });
   } catch (error) {
     if (error instanceof AuthError) {
       return error.status === 401 ? Api.unauthorized(error.message) : Api.forbidden(error.message);

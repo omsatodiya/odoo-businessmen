@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { Role } from "@prisma/client";
 
-import { can, type Resource } from "@/lib/rbac";
+import { can, getRbacMatrix, type Resource } from "@/lib/rbac";
 
 const SESSION_COOKIE = "transitops_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -112,7 +112,8 @@ export async function requireAuth(): Promise<SessionPayload> {
  */
 export async function requireAccess(resource: Resource, need: "VIEW" | "FULL"): Promise<SessionPayload> {
   const session = await requireAuth();
-  if (!can(session.role, resource, need)) {
+  const matrix = await getRbacMatrix();
+  if (!can(matrix, session.role, resource, need)) {
     throw new AuthError(403, `Role ${session.role} lacks ${need} access to ${resource}`);
   }
   return session;

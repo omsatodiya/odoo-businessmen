@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import type { AppSettings, Role } from "@prisma/client";
 import { toast } from "sonner";
 
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
-import { can, RBAC_MATRIX, type Access, type Resource } from "@/lib/rbac";
+import { can, EDITABLE_RESOURCES, type Access, type RbacMatrix } from "@/lib/rbac";
 import { useSettingsStore } from "@/store/settings-slice";
 import {
   CURRENCIES,
@@ -25,6 +26,7 @@ import {
   DISTANCE_UNITS,
   type Currency,
   type DistanceUnit,
+  type UpdateRbacMatrixInput,
 } from "@/types/settings-types";
 import { cn } from "@/lib/utils";
 
@@ -37,13 +39,15 @@ const ROLE_LABELS: Record<Role, string> = {
 
 const ROLE_ORDER: Role[] = ["FLEET_MANAGER", "DISPATCHER", "SAFETY_OFFICER", "FINANCIAL_ANALYST"];
 
-const MATRIX_RESOURCES: { key: Resource; label: string }[] = [
-  { key: "FLEET", label: "Fleet" },
-  { key: "DRIVERS", label: "Drivers" },
-  { key: "TRIPS", label: "Trips" },
-  { key: "FUEL_EXPENSES", label: "Fuel/Exp." },
-  { key: "ANALYTICS", label: "Analytics" },
-];
+const RESOURCE_LABELS: Record<(typeof EDITABLE_RESOURCES)[number], string> = {
+  FLEET: "Fleet",
+  DRIVERS: "Drivers",
+  TRIPS: "Trips",
+  FUEL_EXPENSES: "Fuel/Exp.",
+  ANALYTICS: "Analytics",
+};
+
+const ACCESS_OPTIONS: Access[] = ["NONE", "VIEW", "FULL"];
 
 const ACCESS_DISPLAY: Record<Access, string> = {
   FULL: "✓",
@@ -58,8 +62,8 @@ const ACCESS_STYLE: Record<Access, string> = {
 };
 
 export function SettingsClient({ role }: { role: Role }) {
-  const { settings, loading, error, fetch } = useSettingsStore();
-  const canEdit = can(role, "SETTINGS", "FULL");
+  const { settings, rbacMatrix, loading, error, fetch } = useSettingsStore();
+  const canEdit = rbacMatrix ? can(rbacMatrix, role, "SETTINGS", "FULL") : false;
 
   useEffect(() => {
     void fetch();
@@ -74,7 +78,7 @@ export function SettingsClient({ role }: { role: Role }) {
 
       {error ? (
         <Alert variant="destructive">
-          <AlertTitle>Could not load settings</AlertTitle>
+          <AlertTitle>Something went wrong</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
@@ -93,40 +97,13 @@ export function SettingsClient({ role }: { role: Role }) {
 
         <div>
           <h2 className="mb-2 text-base font-semibold text-foreground">Role-Based Access (RBAC)</h2>
-          <div className="overflow-x-auto border border-border bg-card">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Role
-                  </th>
-                  {MATRIX_RESOURCES.map((resource) => (
-                    <th
-                      key={resource.key}
-                      className="px-4 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-                    >
-                      {resource.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {ROLE_ORDER.map((roleKey) => (
-                  <tr key={roleKey} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5 font-medium text-foreground">{ROLE_LABELS[roleKey]}</td>
-                    {MATRIX_RESOURCES.map((resource) => {
-                      const access = RBAC_MATRIX[roleKey][resource.key];
-                      return (
-                        <td key={resource.key} className={cn("px-4 py-2.5 font-mono", ACCESS_STYLE[access])}>
-                          {ACCESS_DISPLAY[access]}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {loading && !rbacMatrix ? (
+            <div className="border border-border bg-card p-4 text-sm text-muted-foreground">
+              Loading RBAC matrix...
+            </div>
+          ) : rbacMatrix ? (
+            <RbacMatrixEditor matrix={rbacMatrix} canEdit={canEdit} />
+          ) : null}
         </div>
       </div>
     </div>
@@ -234,5 +211,135 @@ function GeneralSettingsForm({ settings, canEdit }: { settings: AppSettings; can
         <p className="text-xs text-muted-foreground">Only Fleet Managers can edit these settings.</p>
       )}
     </form>
+  );
+}
+
+/**
+ * Same mount-once-data-is-ready pattern as GeneralSettingsForm — local
+ * pending-edit state initializes from the loaded matrix via useState, no
+ * effect required.
+ */
+function RbacMatrixEditor({ matrix, canEdit }: { matrix: RbacMatrix; canEdit: boolean }) {
+  const router = useRouter();
+  const updateRbacMatrix = useSettingsStore((state) => state.updateRbacMatrix);
+  const [pending, setPending] = useState<RbacMatrix>(() => structuredClone(matrix));
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isDirty = ROLE_ORDER.some((roleKey) =>
+    EDITABLE_RESOURCES.some((resource) => pending[roleKey][resource] !== matrix[roleKey][resource])
+  );
+
+  const setCell = (roleKey: Role, resource: (typeof EDITABLE_RESOURCES)[number], value: Access) => {
+    setPending((prev) => ({
+      ...prev,
+      [roleKey]: { ...prev[roleKey], [resource]: value },
+    }));
+  };
+
+  const handleDiscard = () => setPending(structuredClone(matrix));
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const payload = ROLE_ORDER.reduce((acc, roleKey) => {
+        acc[roleKey] = {
+          FLEET: pending[roleKey].FLEET,
+          DRIVERS: pending[roleKey].DRIVERS,
+          TRIPS: pending[roleKey].TRIPS,
+          FUEL_EXPENSES: pending[roleKey].FUEL_EXPENSES,
+          ANALYTICS: pending[roleKey].ANALYTICS,
+        };
+        return acc;
+      }, {} as UpdateRbacMatrixInput);
+
+      await updateRbacMatrix(payload);
+      toast.success("RBAC matrix saved — changes apply immediately across the app.");
+      // Re-render this session's server components (sidebar included) now,
+      // so the effect is visible immediately instead of on the next
+      // navigation only.
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save RBAC matrix");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-x-auto border border-border bg-card">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="px-4 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Role
+              </th>
+              {EDITABLE_RESOURCES.map((resource) => (
+                <th
+                  key={resource}
+                  className="px-4 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                >
+                  {RESOURCE_LABELS[resource]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ROLE_ORDER.map((roleKey) => (
+              <tr key={roleKey} className="border-b border-border last:border-0">
+                <td className="px-4 py-2 font-medium text-foreground">{ROLE_LABELS[roleKey]}</td>
+                {EDITABLE_RESOURCES.map((resource) => {
+                  const access = pending[roleKey][resource];
+                  return (
+                    <td key={resource} className="px-2 py-1.5">
+                      {canEdit ? (
+                        <Select
+                          value={access}
+                          onValueChange={(value) => setCell(roleKey, resource, value as Access)}
+                        >
+                          <SelectTrigger className="h-8 w-[92px] font-mono text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ACCESS_OPTIONS.map((option) => (
+                              <SelectItem key={option} value={option} className="font-mono text-xs">
+                                {ACCESS_DISPLAY[option]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className={cn("px-2 font-mono", ACCESS_STYLE[access])}>
+                          {ACCESS_DISPLAY[access]}
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {canEdit ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Settings and Dashboard access aren&apos;t editable here — this keeps Fleet Manager from ever
+            locking itself out of this screen.
+          </p>
+          <div className="flex items-center gap-2">
+            {isDirty ? (
+              <Button type="button" variant="outline" size="sm" onClick={handleDiscard} disabled={isSaving}>
+                Discard
+              </Button>
+            ) : null}
+            <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
+              {isSaving ? "Saving..." : "Save RBAC changes"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
