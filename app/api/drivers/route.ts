@@ -8,7 +8,7 @@ import { Prisma, DriverStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAccess("DRIVERS", "VIEW");
+    await requireAccess("DRIVERS", "VIEW");
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const q = searchParams.get("q");
@@ -38,18 +38,14 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Compute trip completion rate for each driver
-    const data = drivers.map((driver) => {
-      const totalTrips = driver.trips.length;
-      const completedTrips = driver.trips.filter((t) => t.status === "COMPLETED").length;
+    // Compute trip completion rate for each driver, dropping the trips
+    // relation from the response to keep the payload light.
+    const data = drivers.map(({ trips, ...driver }) => {
+      const totalTrips = trips.length;
+      const completedTrips = trips.filter((t) => t.status === "COMPLETED").length;
       const tripCompletionRate = totalTrips > 0 ? Math.round((completedTrips / totalTrips) * 100) : 0;
 
-      // Remove trips relation from response to keep payload light
-      const { trips, ...rest } = driver;
-      return {
-        ...rest,
-        tripCompletionRate,
-      };
+      return { ...driver, tripCompletionRate };
     });
 
     return Api.ok(data);
@@ -64,7 +60,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAccess("DRIVERS", "FULL");
+    await requireAccess("DRIVERS", "FULL");
     const body = await req.json();
     const result = driverSchema.safeParse(body);
     if (!result.success) {

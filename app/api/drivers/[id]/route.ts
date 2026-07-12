@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await requireAccess("DRIVERS", "FULL");
+    await requireAccess("DRIVERS", "FULL");
     const body = await req.json();
 
     const result = updateDriverSchema.safeParse(body);

@@ -1,8 +1,14 @@
 import { create } from "zustand";
 import type { Driver } from "@prisma/client";
 
+import type { DriverInput, UpdateDriverInput } from "@/types/driver-types";
+
 export interface DriverWithCompletion extends Driver {
   tripCompletionRate: number;
+}
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
 }
 
 export interface DriverState {
@@ -14,8 +20,8 @@ export interface DriverState {
     q: string;
   };
   fetch: () => Promise<void>;
-  create: (dto: any) => Promise<void>;
-  update: (id: string, dto: any) => Promise<void>;
+  create: (dto: DriverInput) => Promise<void>;
+  update: (id: string, dto: UpdateDriverInput) => Promise<void>;
   setFilter: (key: string, value: string) => void;
 }
 
@@ -42,8 +48,8 @@ export const useDriverStore = create<DriverState>((set, get) => ({
       }
       const json = await res.json();
       set({ items: json.data, loading: false });
-    } catch (err: any) {
-      set({ error: err.message || "Failed to load drivers", loading: false });
+    } catch (err) {
+      set({ error: errorMessage(err, "Failed to load drivers"), loading: false });
     }
   },
   create: async (dto) => {
@@ -59,9 +65,10 @@ export const useDriverStore = create<DriverState>((set, get) => ({
         throw new Error(errorData.error?.message || "Failed to create driver");
       }
       await get().fetch();
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
+    } catch (err) {
+      const message = errorMessage(err, "Failed to create driver");
+      set({ error: message, loading: false });
+      throw new Error(message);
     }
   },
   update: async (id, dto) => {
@@ -77,9 +84,10 @@ export const useDriverStore = create<DriverState>((set, get) => ({
         throw new Error(errorData.error?.message || "Failed to update driver");
       }
       await get().fetch();
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
-      throw err;
+    } catch (err) {
+      const message = errorMessage(err, "Failed to update driver");
+      set({ error: message, loading: false });
+      throw new Error(message);
     }
   },
   setFilter: (key, value) => {

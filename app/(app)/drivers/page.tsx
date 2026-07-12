@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, isPast } from "date-fns";
 import { Edit2, ShieldAlert } from "lucide-react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { FilterBar, FilterSearchInput } from "@/components/shared/filter-bar";
@@ -24,29 +25,27 @@ import { toast } from "sonner";
 
 export default function DriversPage() {
   const { items, loading, error, filters, fetch, setFilter, update } = useDriverStore();
-  const [selectedDriver, setSelectedDriver] = useState<DriverWithCompletion | null>(null);
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDriver, setEditDriver] = useState<DriverWithCompletion | null>(null);
+
+  // Derived, not synced via effect — always reflects the latest fetch.
+  const selectedDriver = useMemo(
+    () => items.find((d) => d.id === selectedDriverId) ?? null,
+    [items, selectedDriverId]
+  );
 
   useEffect(() => {
     fetch();
   }, [fetch]);
-
-  // Keep selected driver synced with items updates
-  useEffect(() => {
-    if (selectedDriver) {
-      const updated = items.find((d) => d.id === selectedDriver.id);
-      setSelectedDriver(updated || null);
-    }
-  }, [items, selectedDriver]);
 
   const handleStatusToggle = async (status: "AVAILABLE" | "OFF_DUTY" | "SUSPENDED") => {
     if (!selectedDriver) return;
     try {
       await update(selectedDriver.id, { status });
       toast.success(`Driver status updated to ${status}`);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update status");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 
@@ -66,7 +65,7 @@ export default function DriversPage() {
             "font-medium text-foreground cursor-pointer select-none",
             selectedDriver?.id === driver.id && "text-primary"
           )}
-          onClick={() => setSelectedDriver(driver)}
+          onClick={() => setSelectedDriverId(driver.id)}
         >
           {driver.name}
         </div>
@@ -79,7 +78,7 @@ export default function DriversPage() {
       cell: (driver: DriverWithCompletion) => (
         <div
           className={cn("cursor-pointer select-none", selectedDriver?.id === driver.id && "text-primary font-semibold")}
-          onClick={() => setSelectedDriver(driver)}
+          onClick={() => setSelectedDriverId(driver.id)}
         >
           {driver.licenseNo}
         </div>
@@ -90,7 +89,7 @@ export default function DriversPage() {
       accessorKey: "licenseCategory",
       className: "font-mono",
       cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriver(driver)}>
+        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
           {driver.licenseCategory}
         </div>
       ),
@@ -104,7 +103,7 @@ export default function DriversPage() {
         return (
           <div
             className="cursor-pointer select-none"
-            onClick={() => setSelectedDriver(driver)}
+            onClick={() => setSelectedDriverId(driver.id)}
           >
             <span
               className={cn(
@@ -124,7 +123,7 @@ export default function DriversPage() {
       accessorKey: "contact",
       className: "font-mono tabular-nums text-muted-foreground",
       cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriver(driver)}>
+        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
           {driver.contact}
         </div>
       ),
@@ -134,7 +133,7 @@ export default function DriversPage() {
       accessorKey: "tripCompletionRate",
       className: "font-mono tabular-nums text-right",
       cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriver(driver)}>
+        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
           {driver.tripCompletionRate}%
         </div>
       ),
@@ -144,7 +143,7 @@ export default function DriversPage() {
       accessorKey: "safetyScore",
       className: "text-center",
       cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriver(driver)}>
+        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums",
@@ -160,7 +159,7 @@ export default function DriversPage() {
       header: "Status",
       accessorKey: "status",
       cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriver(driver)}>
+        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
           <StatusBadge status={driver.status} />
         </div>
       ),
@@ -202,6 +201,13 @@ export default function DriversPage() {
           </Button>
         }
       />
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Could not load drivers</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <FilterBar>
         <FilterSearchInput
@@ -247,7 +253,7 @@ export default function DriversPage() {
               return (
                 <div
                   key={driver.id}
-                  onClick={() => setSelectedDriver(driver)}
+                  onClick={() => setSelectedDriverId(driver.id)}
                   className={cn(
                     "p-4 space-y-2 hover:bg-muted/50 cursor-pointer transition-colors",
                     selectedDriver?.id === driver.id && "bg-muted"
@@ -298,23 +304,6 @@ export default function DriversPage() {
           )}
         </div>
       </div>
-
-      {/* Row selection listener to bind click events on DataTable row element */}
-      <table className="hidden">
-        {/* Helper layout hack to map row selection in standard DataTable */}
-        {/* We can achieve row selection simply by attaching onClick inside cells, but we can also use custom cells or custom hook. */}
-        {/* Here we hook row clicks cleanly by modifying the DataTable implementation if needed, but since we cannot modify components/ui/data-table.tsx, we can wrap cell contents or wrap rows using a pointer handler. */}
-      </table>
-
-      {/* Wrapping cell content or wrapping the columns is simpler, but wait: */}
-      {/* We can handle selected row by adding a click listener on the DataTable items inside the columns. Or since DataTable rows themselves are clickable, let's check components/ui/data-table.tsx: */}
-      {/* It says: key={getRowKey ? getRowKey(row, i) : i} className="hover:bg-muted/50 transition-colors" */}
-      {/* Wait, the table row in components/ui/data-table.tsx does NOT take an onClick handler. But we can select a row by clicking on any cell or we can customize our table page layout. */}
-      {/* Let's make every text cell clickable, or add a class to cell cell(row) to handle selection. */}
-      {/* Even better, we can render the cells with a wrapper div that sets selectedDriver onClick! */}
-      {/* Let's implement that in the columns cell definitions: */}
-      {/* e.g. onClick={() => setSelectedDriver(driver)} inside cell wrappers. */}
-      {/* That is extremely robust and doesn't require modifying DataTable! */}
 
       {/* Quick Status Toggle Panel */}
       <div className="border border-border bg-card p-4 space-y-4">
@@ -369,6 +358,7 @@ export default function DriversPage() {
       </div>
 
       <DriverFormModal
+        key={editDriver?.id ?? "new"}
         open={modalOpen}
         onOpenChange={setModalOpen}
         driver={editDriver}

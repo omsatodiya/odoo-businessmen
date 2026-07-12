@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import type { Driver } from "@prisma/client";
 import { LicenseCategory, DriverStatus } from "@prisma/client";
@@ -28,37 +28,21 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
   const createDriver = useDriverStore((state) => state.create);
   const updateDriver = useDriverStore((state) => state.update);
 
-  const [name, setName] = useState("");
-  const [licenseNo, setLicenseNo] = useState("");
-  const [licenseCategory, setLicenseCategory] = useState<LicenseCategory>("LMV");
-  const [licenseExpiry, setLicenseExpiry] = useState("");
-  const [contact, setContact] = useState("");
-  const [safetyScore, setSafetyScore] = useState(100);
-  const [status, setStatus] = useState<DriverStatus>("AVAILABLE");
+  // Initial values come straight from props. The parent remounts this
+  // component (via a `key` keyed on driver?.id) whenever the edit target
+  // changes, so there's no need to sync via an effect.
+  const [name, setName] = useState(driver?.name ?? "");
+  const [licenseNo, setLicenseNo] = useState(driver?.licenseNo ?? "");
+  const [licenseCategory, setLicenseCategory] = useState<LicenseCategory>(driver?.licenseCategory ?? "LMV");
+  const [licenseExpiry, setLicenseExpiry] = useState(
+    driver ? new Date(driver.licenseExpiry).toISOString().split("T")[0] : ""
+  );
+  const [contact, setContact] = useState(driver?.contact ?? "");
+  const [safetyScore, setSafetyScore] = useState(driver?.safetyScore ?? 100);
+  const [status, setStatus] = useState<DriverStatus>(driver?.status ?? "AVAILABLE");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (driver) {
-      setName(driver.name);
-      setLicenseNo(driver.licenseNo);
-      setLicenseCategory(driver.licenseCategory);
-      setLicenseExpiry(new Date(driver.licenseExpiry).toISOString().split("T")[0]);
-      setContact(driver.contact);
-      setSafetyScore(driver.safetyScore);
-      setStatus(driver.status);
-    } else {
-      setName("");
-      setLicenseNo("");
-      setLicenseCategory("LMV");
-      setLicenseExpiry("");
-      setContact("");
-      setSafetyScore(100);
-      setStatus("AVAILABLE");
-    }
-    setErrors({});
-  }, [driver, open]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -95,8 +79,8 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
         toast.success("Driver registered successfully");
       }
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
