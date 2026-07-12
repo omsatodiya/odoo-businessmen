@@ -44,11 +44,12 @@ export default function AnalyticsPage() {
         description="Fleet-wide performance metrics, costs, and revenue analysis."
         actions={
           <a
-            href="/api/analytics/export"
-            download
-            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            href="/analytics-print"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground cursor-pointer"
           >
-            Export CSV
+            Export PDF
           </a>
         }
       />
