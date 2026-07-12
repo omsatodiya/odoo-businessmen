@@ -1,6 +1,6 @@
 # TransitOps
 
-**Smart Transport Operations Platform** — a centralized system for managing vehicle, driver, dispatch, maintenance, and expense operations for a transport company, built end-to-end on Next.js 16 (App Router), TypeScript, Tailwind CSS 4, Shadcn UI, Prisma 6 + PostgreSQL, Zustand, and Zod.
+**Smart Transport Operations Platform** — a centralized system for managing vehicle, driver, dispatch, maintenance, and expense operations for a transport company.
 
 It replaces the spreadsheets and manual logbooks many transport companies still rely on with a single system of record: every vehicle and driver has one true status, every dispatch is validated against real business rules before it's allowed to happen, and every role sees exactly the slice of the operation they're responsible for.
 
@@ -27,6 +27,31 @@ In addition to core features, TransitOps includes several premium, enterprise-gr
 - **Responsive Light & Dark Modes** — Theme toggler embedded in the top header utilizing `next-themes` to render high-contrast light and dark views dynamically.
 - **Advanced CSV Export** — Downloadable CSV report generator for fleet analytics, formatted cleanly to match dashboard metrics.
 - **Enhanced Visual Scannability** — Clean font weight hierarchy, monospace badges for license/registration lookups, uppercase unit annotations (`KM`, `KG`, `₹`), and color-coded status badges.
+
+## Tech Stack
+
+### Core Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Framework** | Next.js 16 (App Router) | React server components, REST API routing, and optimized builds |
+| **Language** | TypeScript (Strict Mode) | Strong type-safety and interface validation across client and server |
+| **Styling** | Tailwind CSS 4 | Modern, variable-based utility styling with fluid typography |
+| **UI Components** | Shadcn UI | Premium, compact, and fully accessible primitive components |
+| **Icons** | Lucide React | High-contrast vector iconography (emojis strictly avoided in UI) |
+| **Animations** | Framer Motion | Smooth, lightweight layout transitions and UI micro-animations |
+| **Database** | PostgreSQL | Robust relational storage for drivers, dispatches, and logs |
+| **ORM** | Prisma 6 | Parameterized, N+1 query-safe database modeling and operations |
+| **State Management**| Zustand | Global client-side store slices for active UI and permission layers |
+| **Validation** | Zod | Server-side API payload sanitization and client-side form validation |
+
+## Images
+
+<img width="1917" height="927" alt="image" src="https://github.com/user-attachments/assets/57f9c0f1-32b7-4b3b-9d8f-fc962ed59ba6" />
+<img width="1916" height="926" alt="image" src="https://github.com/user-attachments/assets/762838c4-60e8-4016-9145-0ae27a3b9550" />
+<img width="1460" height="832" alt="image" src="https://github.com/user-attachments/assets/bd86a0cf-4222-4e2b-8d21-6efeee7f30c6" />
+<img width="1917" height="931" alt="image" src="https://github.com/user-attachments/assets/80009cc7-1b63-4557-bb49-67424d2cda95" />
+
 
 ## Roles (RBAC)
 
@@ -135,3 +160,5 @@ types/                 Zod validation schemas + inferred TypeScript types
 - Keep Meilisearch and Loki network access private in deployed environments.
 - Rotate `SESSION_SECRET` and the database password before exposing the stack beyond local development.
 - `prisma/schema.prisma` is intentionally migration-free (`db push` only) for fast schema iteration — introduce real migrations before production use.
+
+Made by Team Businessmen
