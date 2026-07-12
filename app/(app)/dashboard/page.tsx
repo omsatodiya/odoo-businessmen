@@ -1,15 +1,25 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { can } from "@/lib/rbac";
+import { DashboardClient } from "@/components/dashboard/dashboard-client";
 
-// Placeholder — replaced by the real KPI dashboard in the Dashboard build phase.
 export default async function DashboardPage() {
   const session = await getSession();
+  if (!session) {
+    redirect("/login");
+  }
 
-  return (
-    <div className="space-y-1">
-      <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-      <p className="text-sm text-muted-foreground">
-        Signed in as {session?.name} ({session?.role}). KPI cards land here next.
-      </p>
-    </div>
-  );
+  // Ensure role has permission to view dashboard
+  if (!can(session.role, "DASHBOARD", "VIEW")) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-2">
+        <h1 className="text-xl font-semibold text-destructive">Access Denied</h1>
+        <p className="text-sm text-muted-foreground">
+          You do not have permission to view the Dashboard.
+        </p>
+      </div>
+    );
+  }
+
+  return <DashboardClient />;
 }
