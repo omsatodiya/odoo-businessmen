@@ -1,37 +1,64 @@
-# Odoo Boilerplate
+# TransitOps
 
-A production-minded Next.js 16 App Router template with TypeScript, Tailwind CSS 4, Shadcn UI, Prisma 6, PostgreSQL, Zustand, Zod, Meilisearch-backed user search, and Loki-compatible structured logging.
+**Smart Transport Operations Platform** — a centralized system for managing vehicle, driver, dispatch, maintenance, and expense operations for a transport company, built end-to-end on Next.js 16 (App Router), TypeScript, Tailwind CSS 4, Shadcn UI, Prisma 6 + PostgreSQL, Zustand, and Zod.
 
-## Features
+Built for an 8-hour hackathon. See [`plan.md`](plan.md) for the team build plan, [`design.md`](design.md) for the UI/UX system, and [`next-steps.md`](next-steps.md) for the in-flight task breakdown.
 
-- Next.js 16 App Router with server-first routing and compact responsive UI.
-- Strict TypeScript, Zod validation, Prisma-backed PostgreSQL persistence, and sanitized API errors.
-- Users CRUD with pagination, filters, sorting, debounced search, mobile card layout, and polished loading states.
-- Meilisearch service for typo-tolerant semantic-style search with a safe PostgreSQL fallback.
-- Loki logging integration using the `grafana/loki` Docker image plus structured JSON console logs.
-- Security headers configured in `next.config.ts`.
-- Health endpoint at `/api/health` for database, search, and logging readiness checks.
+## What it does
+
+Digitizes the full lifecycle of transport operations that most companies still run on spreadsheets:
+
+- **Vehicle Registry** — master list of vehicles (reg no, type, capacity, odometer, acquisition cost, status).
+- **Driver Management** — driver profiles with license category/expiry, safety score, and status.
+- **Trip Dispatcher** — create, dispatch, complete, and cancel trips, with capacity/availability/license guards enforced server-side, not just in the UI.
+- **Maintenance** — opening a maintenance record automatically pulls a vehicle out of the dispatch pool; closing it returns it (unless retired).
+- **Fuel & Expenses** — fuel logs and other expenses (toll, parking, etc.), rolled up into per-vehicle operational cost.
+- **Analytics** — fuel efficiency, fleet utilization, operational cost, and ROI per vehicle, with CSV export.
+- **Dashboard** — fleet-wide KPIs, recent trips, and vehicle status breakdown.
+- **Settings** — depot config and a read-only view of the RBAC matrix.
+
+## Roles (RBAC)
+
+One login, four roles, each scoped to a different slice of the app — see `lib/rbac.ts` for the exact access matrix:
+
+| Role | Full access to | View-only |
+|---|---|---|
+| Fleet Manager | Fleet, Maintenance, Analytics, Settings | Dashboard |
+| Dispatcher | Trips | Fleet, Settings, Dashboard |
+| Safety Officer | Drivers | Trips, Settings, Dashboard |
+| Financial Analyst | Fuel & Expenses, Analytics | Fleet, Settings, Dashboard |
+
+Every status transition (vehicle/driver → On Trip, In Shop, etc.) is enforced centrally in `lib/services/*`, not scattered across route handlers, so the rules can't be bypassed by any one screen.
 
 ## Quick Start
 
 ```bash
 pnpm install
 docker compose up -d
-pnpm db:migrate
+npx prisma db push
 pnpm db:generate
-pnpm users:populate
-pnpm users:index
+pnpm db:seed
 pnpm dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` — you'll be redirected to `/login`.
+
+**Demo logins** (shared password `Password123!`, also printed by `pnpm db:seed`):
+
+| Role | Email |
+|---|---|
+| Fleet Manager | fleet.manager@transitops.in |
+| Dispatcher | raven.k@transitops.in |
+| Safety Officer | safety.officer@transitops.in |
+| Financial Analyst | finance.analyst@transitops.in |
 
 ## Environment
 
-Copy `.env.example` to `.env` and adjust secrets before production:
+Copy `.env.example` to `.env` and adjust before production:
 
 ```env
 DATABASE_URL="postgresql://postgres:password@localhost:5432/odoo_db?schema=public"
+SESSION_SECRET="replace-with-a-long-random-string-openssl-rand-base64-32"
 MEILISEARCH_HOST="http://localhost:7700"
 MEILISEARCH_API_KEY="masterKey"
 MEILISEARCH_USERS_INDEX="users"
@@ -39,46 +66,61 @@ LOKI_PUSH_URL="http://localhost:3100/loki/api/v1/push"
 LOG_LEVEL="info"
 ```
 
-Use a strong Meilisearch key and database password outside local development.
+`SESSION_SECRET` signs the login session JWT — use a long random value (`openssl rand -base64 32`) outside local development. Use a strong Meilisearch key and database password in any shared/deployed environment.
 
 ## Infrastructure
 
 `docker-compose.yml` includes:
 
-- `postgres`: primary relational database with a persistent volume.
-- `meilisearch`: search engine for users search bars.
-- `loki`: log aggregation target for server-side structured logs.
+- `postgres` — primary relational database with a persistent volume.
+- `meilisearch` — typo-tolerant search engine, with a safe Postgres `ILIKE` fallback when it's offline/unconfigured (`lib/meilisearch.ts`).
+- `loki` — log aggregation target for server-side structured JSON logs (`lib/logger.ts`), fail-silent if unreachable.
 
 All services include health checks and persistent volumes.
 
 ## Useful Scripts
 
-- `pnpm dev`: start the Next.js development server.
-- `pnpm build`: create a production build.
-- `pnpm lint`: run ESLint.
-- `pnpm db:migrate`: apply Prisma migrations.
-- `pnpm db:generate`: regenerate Prisma Client.
-- `pnpm users:populate`: generate and seed demo users.
-- `pnpm users:index`: index existing users into Meilisearch.
-- `pnpm db:wipe`: wipe all database tables.
+- `pnpm dev` — start the Next.js development server.
+- `pnpm build` — create a production build.
+- `pnpm lint` — run ESLint.
+- `npx prisma db push` — sync `prisma/schema.prisma` to the database (no migration files by design — see `plan.md` §3).
+- `pnpm db:generate` — regenerate the Prisma Client.
+- `pnpm db:seed` — reset and reseed the full demo dataset (users, vehicles, drivers, trips, maintenance, fuel logs, expenses). Safe to re-run anytime.
+- `pnpm db:wipe` / `pnpm db:wipe:table <name>` — wipe all/one database table(s), with a confirmation prompt.
 
 ## Project Structure
 
 ```text
-app/                  Next.js layouts, pages, route handlers, and error states
-components/           Reusable UI, layout, modal, landing, page, and table components
-hooks/                Client hooks for UI and data synchronization
-lib/                  API helpers, Prisma client, search, logging, query builders
-prisma/               Schema and migrations
-scripts/              Data generation, seeding, wiping, and search indexing utilities
-store/                Zustand slices and selectors
-types/                Shared Zod schemas and TypeScript types
+app/
+  (app)/               RBAC-gated app shell: dashboard, fleet, drivers, trips,
+                        maintenance, fuel-expenses, analytics, settings
+  api/                 Route handlers — Zod-validated, respond via lib/api.ts's
+                        Api.* helpers, guarded by lib/session.ts's requireAccess()
+  login/                Public login page
+components/
+  auth/                Login form
+  layout/              App sidebar, topbar, user menu (RBAC-filtered nav)
+  shared/              Reusable PageHeader, StatusBadge, KpiCard, FilterBar,
+                        ConfirmDialog, FormModal — built to design.md's spec
+  ui/                  Shadcn primitives
+lib/
+  services/            trip.service.ts, maintenance.service.ts — the only place
+                        vehicle/driver status transitions happen
+  rbac.ts              Single source of truth for the RBAC access matrix
+  session.ts           JWT session cookies, requireAuth()/requireAccess()
+  auth.ts              Password hashing
+  analytics.ts         Fuel efficiency, operational cost, ROI, fleet utilization
+  api.ts, prisma.ts, logger.ts, meilisearch.ts, errors.ts
+prisma/                schema.prisma (no migrations — db push workflow)
+scripts/               seed-transitops.js, wipe-db.js, wipe-table.js
+store/                 Zustand slices (one per feature domain)
+types/                 Zod validation schemas + inferred TypeScript types
 ```
 
 ## Production Notes
 
-- Keep all incoming API payloads behind Zod validation.
+- Every API route validates its payload with Zod and never leaks raw Prisma/stack traces to the client (`Api.internalError()` sanitizes).
+- Every vehicle/driver status transition goes through `lib/services/*` — never set `.status` directly in a route handler.
 - Keep Meilisearch and Loki network access private in deployed environments.
-- Replace local Docker secrets before exposing the stack.
-- Re-run `pnpm users:index` after bulk imports or migrations that bypass route handlers.
-- Add real server-side authentication before protecting business data in production.
+- Rotate `SESSION_SECRET` and the database password before exposing the stack beyond local development.
+- `prisma/schema.prisma` is intentionally migration-free for hackathon speed (`db push` only) — introduce real migrations before production use.
