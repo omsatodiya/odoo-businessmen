@@ -166,11 +166,12 @@ export default function FuelExpensesPage() {
         actions={
           <div className="flex items-center gap-3">
             <a
-              href={`/api/fuel-expenses/export?vehicleId=${filters.vehicleId}`}
-              download
+              href={`/fuel-expenses-print?vehicleId=${filters.vehicleId}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground cursor-pointer"
             >
-              Export CSV
+              Export PDF
             </a>
             <Button
               onClick={() => setLogFuelOpen(true)}
