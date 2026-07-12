@@ -2,14 +2,37 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format, isPast } from "date-fns";
-import { Edit2, ShieldAlert } from "lucide-react";
+import { 
+  Edit, 
+  Loader2, 
+  MoreHorizontal, 
+  Plus, 
+  Search, 
+  SlidersHorizontal, 
+  TriangleAlert 
+} from "lucide-react";
+import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { FilterBar, FilterSearchInput } from "@/components/shared/filter-bar";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,23 +44,32 @@ import { useDriverStore } from "@/store/driver-slice";
 import type { DriverWithCompletion } from "@/store/driver-slice";
 import { DriverFormModal } from "@/components/drivers/driver-form-modal";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 export default function DriversPage() {
   const { items, loading, error, filters, fetch, setFilter, update } = useDriverStore();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDriver, setEditDriver] = useState<DriverWithCompletion | null>(null);
+  
+  // Pagination state (client-side)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  // Derived, not synced via effect — always reflects the latest fetch.
+  // Sync selected driver state when items fetch completes
   const selectedDriver = useMemo(
     () => items.find((d) => d.id === selectedDriverId) ?? null,
     [items, selectedDriverId]
   );
 
+  // Fetch drivers list on mount and filter changes
   useEffect(() => {
     fetch();
   }, [fetch]);
+
+  // Reset page number on search or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.q, filters.status]);
 
   const handleStatusToggle = async (status: "AVAILABLE" | "OFF_DUTY" | "SUSPENDED") => {
     if (!selectedDriver) return;
@@ -49,143 +81,17 @@ export default function DriversPage() {
     }
   };
 
-  const getSafetyBadgeStyle = (score: number) => {
-    if (score >= 90) return "bg-success/15 text-success border border-success/20";
-    if (score >= 80) return "bg-warning/15 text-warning border border-warning/20";
-    return "bg-destructive/10 text-destructive border border-destructive/20";
-  };
+  // Client-side paginated items
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return items.slice(start, start + itemsPerPage);
+  }, [items, currentPage]);
 
-  const columns = [
-    {
-      header: "Driver",
-      accessorKey: "name",
-      cell: (driver: DriverWithCompletion) => (
-        <div
-          className={cn(
-            "font-medium text-foreground cursor-pointer select-none",
-            selectedDriver?.id === driver.id && "text-primary"
-          )}
-          onClick={() => setSelectedDriverId(driver.id)}
-        >
-          {driver.name}
-        </div>
-      ),
-    },
-    {
-      header: "License No",
-      accessorKey: "licenseNo",
-      className: "font-mono tabular-nums",
-      cell: (driver: DriverWithCompletion) => (
-        <div
-          className={cn("cursor-pointer select-none", selectedDriver?.id === driver.id && "text-primary font-semibold")}
-          onClick={() => setSelectedDriverId(driver.id)}
-        >
-          {driver.licenseNo}
-        </div>
-      ),
-    },
-    {
-      header: "Category",
-      accessorKey: "licenseCategory",
-      className: "font-mono",
-      cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
-          {driver.licenseCategory}
-        </div>
-      ),
-    },
-    {
-      header: "Expiry",
-      accessorKey: "licenseExpiry",
-      cell: (driver: DriverWithCompletion) => {
-        const date = new Date(driver.licenseExpiry);
-        const expired = isPast(date);
-        return (
-          <div
-            className="cursor-pointer select-none"
-            onClick={() => setSelectedDriverId(driver.id)}
-          >
-            <span
-              className={cn(
-                "font-mono tabular-nums",
-                expired ? "text-destructive font-semibold" : "text-muted-foreground"
-              )}
-            >
-              {format(date, "MM/yyyy")}
-              {expired ? " EXPIRED" : ""}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Contact",
-      accessorKey: "contact",
-      className: "font-mono tabular-nums text-muted-foreground",
-      cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
-          {driver.contact}
-        </div>
-      ),
-    },
-    {
-      header: "Trip Compl.",
-      accessorKey: "tripCompletionRate",
-      className: "font-mono tabular-nums text-right",
-      cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
-          {driver.tripCompletionRate}%
-        </div>
-      ),
-    },
-    {
-      header: "Safety",
-      accessorKey: "safetyScore",
-      className: "text-center",
-      cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums",
-              getSafetyBadgeStyle(driver.safetyScore)
-            )}
-          >
-            {driver.safetyScore}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      cell: (driver: DriverWithCompletion) => (
-        <div className="cursor-pointer select-none" onClick={() => setSelectedDriverId(driver.id)}>
-          <StatusBadge status={driver.status} />
-        </div>
-      ),
-    },
-    {
-      header: "Actions",
-      cell: (driver: DriverWithCompletion) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          onClick={(e) => {
-            e.stopPropagation(); // Avoid selecting row when clicking edit button
-            setEditDriver(driver);
-            setModalOpen(true);
-          }}
-        >
-          <Edit2 className="size-3.5" />
-          <span className="sr-only">Edit</span>
-        </Button>
-      ),
-    },
-  ];
+  const totalPages = Math.ceil(items.length / itemsPerPage) || 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Page Header */}
       <PageHeader
         title="Drivers"
         description="Manage your driver database and safety profiles."
@@ -195,13 +101,14 @@ export default function DriversPage() {
               setEditDriver(null);
               setModalOpen(true);
             }}
-            className="bg-primary hover:bg-primary/95 text-primary-foreground font-medium"
+            className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5"
           >
-            + Add Driver
+            <Plus className="size-4 stroke-[3]" /> Add Driver
           </Button>
         }
       />
 
+      {/* Error alert */}
       {error ? (
         <Alert variant="destructive">
           <AlertTitle>Could not load drivers</AlertTitle>
@@ -209,17 +116,23 @@ export default function DriversPage() {
         </Alert>
       ) : null}
 
-      <FilterBar>
-        <FilterSearchInput
-          value={filters.q}
-          onChange={(val) => setFilter("q", val)}
-          placeholder="Search name or license..."
-        />
+      {/* Filter Bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative w-full max-w-md sm:w-72">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={filters.q}
+            onChange={(e) => setFilter("q", e.target.value)}
+            placeholder="Search name or license..."
+            className="pl-9 h-9 bg-card border-border placeholder:text-muted-foreground text-foreground rounded-md w-full focus-visible:ring-1"
+          />
+        </div>
+        
         <Select
           value={filters.status}
           onValueChange={(val) => setFilter("status", val)}
         >
-          <SelectTrigger className="h-9 w-[180px]">
+          <SelectTrigger className="h-9 w-[180px] bg-card border-border text-foreground rounded-md">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -230,129 +143,376 @@ export default function DriversPage() {
             <SelectItem value="SUSPENDED">Suspended</SelectItem>
           </SelectContent>
         </Select>
-      </FilterBar>
 
-      <div className="border border-border bg-card">
-        <DataTable
-          columns={columns}
-          data={items}
-          isLoading={loading}
-          emptyMessage="No drivers found. Register a driver to get started."
-          getRowKey={(row) => row.id}
-        />
-        
+        <Button variant="outline" size="icon" className="h-9 w-9 bg-card border-border hover:bg-muted text-foreground rounded-md">
+          <SlidersHorizontal className="size-4" />
+        </Button>
+      </div>
+
+      {/* Table Container Card */}
+      <div className="border border-border bg-card rounded-md shadow-sm overflow-hidden">
+        <div className="overflow-x-auto hidden md:block">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/10 border-b border-border">
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">DRIVER</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">LICENSE NO</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">CATEGORY</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">EXPIRY</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">CONTACT</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">TRIP COMPL.</TableHead>
+                <TableHead className="text-center font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">SAFETY</TableHead>
+                <TableHead className="text-left font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">STATUS</TableHead>
+                <TableHead className="text-right font-semibold text-xs tracking-wider text-muted-foreground h-10 px-4 py-3 uppercase">ACTIONS</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="text-xs font-medium">Loading drivers...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                    No drivers found. Register a driver to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedItems.map((driver) => {
+                  const expiryDate = new Date(driver.licenseExpiry);
+                  const expired = isPast(expiryDate);
+                  
+                  let safetyColor = "border-success/30 text-success bg-success/5";
+                  if (driver.safetyScore >= 80 && driver.safetyScore < 90) {
+                    safetyColor = "border-warning/30 text-warning bg-warning/5";
+                  } else if (driver.safetyScore < 80) {
+                    safetyColor = "border-destructive/30 text-destructive bg-destructive/5";
+                  }
+
+                  let badgeStyle = "border-muted-foreground/30 bg-muted/20 text-muted-foreground";
+                  let statusLabel = "OFF DUTY";
+                  if (driver.status === "AVAILABLE") {
+                    badgeStyle = "border-success/30 bg-success/10 text-success";
+                    statusLabel = "AVAILABLE";
+                  } else if (driver.status === "ON_TRIP") {
+                    badgeStyle = "border-primary/30 bg-primary/10 text-primary";
+                    statusLabel = "ON TRIP";
+                  } else if (driver.status === "SUSPENDED") {
+                    badgeStyle = "border-warning/30 bg-warning/10 text-warning";
+                    statusLabel = "SUSPENDED";
+                  }
+
+                  return (
+                    <TableRow
+                      key={driver.id}
+                      className={cn(
+                        "border-b border-border transition-colors hover:bg-muted/30 cursor-pointer",
+                        selectedDriverId === driver.id && "bg-muted/40"
+                      )}
+                      onClick={() => setSelectedDriverId(driver.id)}
+                    >
+                      <TableCell className="px-4 py-3.5 font-bold text-foreground">
+                        {driver.name}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 font-mono text-sm text-muted-foreground/80">
+                        {driver.licenseNo}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 font-mono text-sm text-muted-foreground/80">
+                        {driver.licenseCategory}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5">
+                        {expired ? (
+                          <div className="flex flex-col font-mono text-sm text-destructive italic font-semibold leading-tight">
+                            <span>{format(expiryDate, "MM/yyyy")}</span>
+                            <span className="text-[10px] font-sans uppercase font-bold tracking-wider">EXPIRED</span>
+                          </div>
+                        ) : (
+                          <span className="font-mono text-sm text-muted-foreground/80">
+                            {format(expiryDate, "MM/yyyy")}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 font-mono text-sm text-muted-foreground/80">
+                        {driver.contact}
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 font-mono text-sm text-muted-foreground/80">
+                        {driver.tripCompletionRate}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 text-center">
+                        <div className="flex justify-center">
+                          <div
+                            className={cn(
+                              "w-8 h-8 rounded-full border flex items-center justify-center font-mono font-bold text-xs shadow-sm",
+                              safetyColor
+                            )}
+                          >
+                            {driver.safetyScore}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5">
+                        <span
+                          className={cn(
+                            "inline-block font-semibold px-2 py-0.5 text-[10px] border rounded tracking-wide text-center uppercase whitespace-nowrap",
+                            badgeStyle
+                          )}
+                        >
+                          {statusLabel}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36 bg-card border-border">
+                            <DropdownMenuLabel className="text-xs">Options</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-border" />
+                            <DropdownMenuItem
+                              className="text-xs cursor-pointer focus:bg-muted"
+                              onClick={() => {
+                                setEditDriver(driver);
+                                setModalOpen(true);
+                              }}
+                            >
+                              <Edit className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                              Edit Driver
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
         {/* Table representation for mobile screens */}
-        <div className="block md:hidden divide-y divide-border">
-          {items.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+        <div className="block md:hidden divide-y divide-border border-t border-border">
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-xs font-medium">Loading drivers...</span>
+            </div>
+          ) : paginatedItems.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
               No drivers found.
             </div>
           ) : (
-            items.map((driver) => {
-              const expired = isPast(new Date(driver.licenseExpiry));
+            paginatedItems.map((driver) => {
+              const expiryDate = new Date(driver.licenseExpiry);
+              const expired = isPast(expiryDate);
+              
+              let safetyColor = "border-success/30 text-success bg-success/5";
+              if (driver.safetyScore >= 80 && driver.safetyScore < 90) {
+                safetyColor = "border-warning/30 text-warning bg-warning/5";
+              } else if (driver.safetyScore < 80) {
+                safetyColor = "border-destructive/30 text-destructive bg-destructive/5";
+              }
+
+              let badgeStyle = "border-muted-foreground/30 bg-muted/20 text-muted-foreground";
+              let statusLabel = "OFF DUTY";
+              if (driver.status === "AVAILABLE") {
+                badgeStyle = "border-success/30 bg-success/10 text-success";
+                statusLabel = "AVAILABLE";
+              } else if (driver.status === "ON_TRIP") {
+                badgeStyle = "border-primary/30 bg-primary/10 text-primary";
+                statusLabel = "ON TRIP";
+              } else if (driver.status === "SUSPENDED") {
+                badgeStyle = "border-warning/30 bg-warning/10 text-warning";
+                statusLabel = "SUSPENDED";
+              }
+
               return (
                 <div
                   key={driver.id}
                   onClick={() => setSelectedDriverId(driver.id)}
                   className={cn(
-                    "p-4 space-y-2 hover:bg-muted/50 cursor-pointer transition-colors",
-                    selectedDriver?.id === driver.id && "bg-muted"
+                    "p-4 space-y-3 hover:bg-muted/20 cursor-pointer transition-colors",
+                    selectedDriverId === driver.id && "bg-muted/30"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-foreground">{driver.name}</div>
-                    <StatusBadge status={driver.status} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground font-mono">
-                    <div>License: {driver.licenseNo} ({driver.licenseCategory})</div>
-                    <div>Contact: {driver.contact}</div>
-                    <div className={expired ? "text-destructive font-semibold" : ""}>
-                      Expiry: {format(new Date(driver.licenseExpiry), "MM/yyyy")}
-                      {expired ? " EXPIRED" : ""}
-                    </div>
-                    <div>Compl: {driver.tripCompletionRate}%</div>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground">Safety:</span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono",
-                          getSafetyBadgeStyle(driver.safetyScore)
-                        )}
-                      >
-                        {driver.safetyScore}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs gap-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditDriver(driver);
-                        setModalOpen(true);
-                      }}
+                    <div className="font-bold text-foreground">{driver.name}</div>
+                    <span
+                      className={cn(
+                        "inline-block font-semibold px-2 py-0.5 text-[10px] border rounded tracking-wide text-center uppercase whitespace-nowrap",
+                        badgeStyle
+                      )}
                     >
-                      <Edit2 className="size-3" />
-                      Edit
-                    </Button>
+                      {statusLabel}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground font-mono">
+                    <div>License: <span className="text-foreground">{driver.licenseNo}</span></div>
+                    <div>Category: <span className="text-foreground">{driver.licenseCategory}</span></div>
+                    <div>Contact: <span className="text-foreground">{driver.contact}</span></div>
+                    <div>Compl: <span className="text-foreground">{driver.tripCompletionRate}%</span></div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      {expired ? (
+                        <span className="font-mono text-xs text-destructive italic font-semibold">
+                          Expiry: {format(expiryDate, "MM/yyyy")} (EXPIRED)
+                        </span>
+                      ) : (
+                        <span className="font-mono text-xs text-muted-foreground">
+                          Expiry: {format(expiryDate, "MM/yyyy")}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Safety:</span>
+                        <div
+                          className={cn(
+                            "w-7 h-7 rounded-full border flex items-center justify-center font-mono font-bold text-[11px] shadow-sm",
+                            safetyColor
+                          )}
+                        >
+                          {driver.safetyScore}
+                        </div>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32 bg-card border-border">
+                          <DropdownMenuItem
+                            className="text-xs cursor-pointer"
+                            onClick={() => {
+                              setEditDriver(driver);
+                              setModalOpen(true);
+                            }}
+                          >
+                            <Edit className="mr-2 h-3.5 w-3.5" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               );
             })
           )}
         </div>
+
+        {/* Table Footer / Pagination */}
+        <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-muted/10">
+          <div className="text-xs text-muted-foreground font-medium">
+            Showing {paginatedItems.length} of {items.length} items
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1 || loading}
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages || loading}
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              className="h-8 bg-card border-border hover:bg-muted text-foreground text-xs px-3 rounded-md"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Quick Status Toggle Panel */}
-      <div className="border border-border bg-card p-4 space-y-4">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-            Toggle Status
-            {selectedDriver ? (
-              <span className="lowercase font-normal text-muted-foreground">
-                {" "}
-                for <span className="font-semibold text-foreground">{selectedDriver.name}</span> (Current: {selectedDriver.status})
-              </span>
-            ) : (
-              <span className="lowercase font-normal text-muted-foreground"> — select a driver from the list above</span>
-            )}
-          </h3>
+      <div className="border border-border bg-card p-4 space-y-4 rounded-md shadow-sm">
+        <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase flex flex-wrap items-center gap-1.5">
+          <span className="text-foreground">TOGGLE STATUS</span>
+          <span className="text-muted-foreground/60">—</span>
+          {selectedDriver ? (
+            <span className="lowercase text-muted-foreground font-normal">
+              select status for <span className="font-semibold text-foreground">{selectedDriver.name}</span> (current: <span className="font-semibold text-foreground uppercase">{selectedDriver.status.replace("_", " ")}</span>)
+            </span>
+          ) : (
+            <span className="lowercase text-muted-foreground font-normal">select a driver from the list above</span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
+          <button
             disabled={!selectedDriver || selectedDriver.status === "ON_TRIP"}
             onClick={() => handleStatusToggle("AVAILABLE")}
-            className="bg-success/10 hover:bg-success/20 text-success border border-success/20 h-9 font-medium"
+            className={cn(
+              "border h-9 font-semibold text-xs tracking-wider px-6 rounded-md transition-colors uppercase select-none outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              selectedDriver && selectedDriver.status !== "ON_TRIP"
+                ? "bg-success/10 hover:bg-success/20 text-success border-success/30 cursor-pointer"
+                : "bg-success/5 text-success/40 border-success/10 cursor-not-allowed opacity-50"
+            )}
           >
             Available
-          </Button>
-          <Button
+          </button>
+          <button
             disabled={true}
-            className="bg-primary/10 text-primary border border-primary/20 h-9 font-medium"
+            className={cn(
+              "border h-9 font-semibold text-xs tracking-wider px-6 rounded-md transition-colors uppercase select-none outline-none",
+              "bg-primary/5 text-primary/40 border-primary/10 cursor-not-allowed opacity-50"
+            )}
           >
             On Trip
-          </Button>
-          <Button
+          </button>
+          <button
             disabled={!selectedDriver || selectedDriver.status === "ON_TRIP"}
             onClick={() => handleStatusToggle("OFF_DUTY")}
-            className="bg-muted text-muted-foreground border border-muted-foreground/20 h-9 font-medium"
+            className={cn(
+              "border h-9 font-semibold text-xs tracking-wider px-6 rounded-md transition-colors uppercase select-none outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              selectedDriver && selectedDriver.status !== "ON_TRIP"
+                ? "bg-muted hover:bg-muted/80 text-muted-foreground border-border cursor-pointer"
+                : "bg-muted/50 text-muted-foreground/40 border-border/50 cursor-not-allowed opacity-50"
+            )}
           >
             Off Duty
-          </Button>
-          <Button
+          </button>
+          <button
             disabled={!selectedDriver || selectedDriver.status === "ON_TRIP"}
             onClick={() => handleStatusToggle("SUSPENDED")}
-            className="bg-warning/10 hover:bg-warning/20 text-warning border border-warning/20 h-9 font-medium"
+            className={cn(
+              "border h-9 font-semibold text-xs tracking-wider px-6 rounded-md transition-colors uppercase select-none outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              selectedDriver && selectedDriver.status !== "ON_TRIP"
+                ? "bg-warning/10 hover:bg-warning/20 text-warning border-warning/30 cursor-pointer"
+                : "bg-warning/5 text-warning/40 border-warning/10 cursor-not-allowed opacity-50"
+            )}
           >
             Suspended
-          </Button>
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2.5 border border-border/40">
-          <ShieldAlert className="size-4 text-warning shrink-0" />
+        <div className="flex items-center gap-2 text-xs text-warning bg-warning/5 p-3 border border-warning/10 rounded-md">
+          <TriangleAlert className="size-4 text-warning shrink-0" />
           <span>Rule: Expired license or Suspended status → blocked from trip assignment</span>
         </div>
       </div>
