@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, type Variants } from "framer-motion";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, SlidersHorizontal } from "lucide-react";
 import { Vehicle } from "@prisma/client";
 
 import { useVehicleStore } from "@/store/vehicle-slice";
@@ -82,22 +82,29 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
 
   const columns: ColumnDef<Vehicle>[] = [
     {
-      header: "Reg No",
-      accessorKey: "regNo",
-      className: "font-semibold tracking-wider",
-    },
-    {
-      header: "Name / Model",
-      accessorKey: "name",
-    },
-    {
-      header: "Type",
+      header: "REG NO",
       cell: (vehicle) => (
-        <span className="font-mono text-xs font-medium uppercase">{vehicle.type}</span>
+        <span className="font-mono font-semibold tracking-wider text-sm uppercase">
+          {vehicle.regNo}
+        </span>
       ),
     },
     {
-      header: "Capacity (Kg)",
+      header: "NAME / MODEL",
+      cell: (vehicle) => (
+        <span className="text-sm font-semibold text-foreground">
+          {vehicle.name}
+        </span>
+      ),
+    },
+    {
+      header: "TYPE",
+      cell: (vehicle) => (
+        <span className="font-mono text-xs font-medium text-muted-foreground uppercase">{vehicle.type}</span>
+      ),
+    },
+    {
+      header: "CAPACITY (KG)",
       cell: (vehicle) => (
         <span className="font-mono tabular-nums text-sm">
           {vehicle.capacityKg.toLocaleString()} kg
@@ -106,7 +113,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
       className: "text-right",
     },
     {
-      header: "Odometer (Km)",
+      header: "ODOMETER (KM)",
       cell: (vehicle) => (
         <span className="font-mono tabular-nums text-sm">
           {vehicle.odometer.toLocaleString()} km
@@ -115,7 +122,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
       className: "text-right",
     },
     {
-      header: "Acquisition Cost",
+      header: "ACQUISITION COST",
       cell: (vehicle) => {
         const formatted = Number(vehicle.acquisitionCost).toLocaleString("en-IN", {
           minimumFractionDigits: 2,
@@ -123,19 +130,20 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
         });
         const aligned = formatted.match(/^\d(?!\d)/) ? `0${formatted}` : formatted;
         return (
-          <span className="font-mono tabular-nums text-sm">
-            ₹ {aligned}
-          </span>
+          <div className="flex flex-col items-end font-mono text-sm tabular-nums leading-none">
+            <span className="text-[10px] text-muted-foreground mb-0.5 select-none">₹</span>
+            <span className="text-foreground">{aligned}</span>
+          </div>
         );
       },
       className: "text-right",
     },
     {
-      header: "Region",
-      cell: (vehicle) => <span>{vehicle.region || "—"}</span>,
+      header: "REGION",
+      cell: (vehicle) => <span className="text-sm font-medium">{vehicle.region || "—"}</span>,
     },
     {
-      header: "Status",
+      header: "STATUS",
       cell: (vehicle) => <StatusBadge status={vehicle.status} />,
     },
   ];
@@ -143,7 +151,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
   // If full access, add actions column
   if (isFullAccess) {
     columns.push({
-      header: "Actions",
+      header: "ACTIONS",
       className: "text-right w-24",
       cell: (vehicle) => (
         <div className="flex items-center justify-end gap-1">
@@ -152,10 +160,10 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
               variant="ghost"
               size="icon"
               onClick={() => handleEdit(vehicle)}
-              className="size-7 cursor-pointer"
+              className="size-8 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
               title="Edit vehicle details"
             >
-              <Edit2 className="size-3.5" />
+              <Edit2 className="size-4" />
             </Button>
           </motion.div>
           {vehicle.status !== "RETIRED" && (
@@ -164,10 +172,10 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
                 variant="ghost"
                 size="icon"
                 onClick={() => handleRetireClick(vehicle)}
-                className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                 title="Retire vehicle"
               >
-                <Trash2 className="size-3.5" />
+                <Trash2 className="size-4" />
               </Button>
             </motion.div>
           )}
@@ -185,7 +193,7 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
           actions={
             isFullAccess ? (
               <motion.div whileTap={{ scale: 0.97 }} className="inline-block">
-                <Button onClick={handleAdd} className="cursor-pointer">+ Add Vehicle</Button>
+                <Button onClick={handleAdd} className="cursor-pointer bg-foreground text-background hover:bg-foreground/90 font-semibold px-4 h-8">+ Add Vehicle</Button>
               </motion.div>
             ) : undefined
           }
@@ -193,55 +201,73 @@ export function FleetRegistryClient({ isFullAccess }: { isFullAccess: boolean })
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <FilterBar>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-border bg-card/25 p-3">
           <FilterSearchInput
             value={filters.q}
             onChange={(val) => setFilter("q", val)}
             placeholder="Search reg no, model..."
+            className="w-full sm:max-w-md"
           />
 
-          <Select
-            value={filters.type || "ALL"}
-            onValueChange={(val) => setFilter("type", val === "ALL" ? "" : val)}
-          >
-            <SelectTrigger className="w-[150px] cursor-pointer">
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL" className="cursor-pointer">All Types</SelectItem>
-              <SelectItem value="VAN" className="cursor-pointer">Van</SelectItem>
-              <SelectItem value="TRUCK" className="cursor-pointer">Truck</SelectItem>
-              <SelectItem value="MINI" className="cursor-pointer">Mini</SelectItem>
-              <SelectItem value="BUS" className="cursor-pointer">Bus</SelectItem>
-              <SelectItem value="TRAILER" className="cursor-pointer">Trailer</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Select
+              value={filters.type || "ALL"}
+              onValueChange={(val) => setFilter("type", val === "ALL" ? "" : val)}
+            >
+              <SelectTrigger className="w-[120px] cursor-pointer">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL" className="cursor-pointer">All Types</SelectItem>
+                <SelectItem value="VAN" className="cursor-pointer">Van</SelectItem>
+                <SelectItem value="TRUCK" className="cursor-pointer">Truck</SelectItem>
+                <SelectItem value="MINI" className="cursor-pointer">Mini</SelectItem>
+                <SelectItem value="BUS" className="cursor-pointer">Bus</SelectItem>
+                <SelectItem value="TRAILER" className="cursor-pointer">Trailer</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={filters.status || "ALL"}
-            onValueChange={(val) => setFilter("status", val === "ALL" ? "" : val)}
-          >
-            <SelectTrigger className="w-[150px] cursor-pointer">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL" className="cursor-pointer">All Statuses</SelectItem>
-              <SelectItem value="AVAILABLE" className="cursor-pointer">Available</SelectItem>
-              <SelectItem value="ON_TRIP" className="cursor-pointer">On Trip</SelectItem>
-              <SelectItem value="IN_SHOP" className="cursor-pointer">In Shop</SelectItem>
-              <SelectItem value="RETIRED" className="cursor-pointer">Retired</SelectItem>
-            </SelectContent>
-          </Select>
-        </FilterBar>
+            <Select
+              value={filters.status || "ALL"}
+              onValueChange={(val) => setFilter("status", val === "ALL" ? "" : val)}
+            >
+              <SelectTrigger className="w-[125px] cursor-pointer">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL" className="cursor-pointer">All Statuses</SelectItem>
+                <SelectItem value="AVAILABLE" className="cursor-pointer">Available</SelectItem>
+                <SelectItem value="ON_TRIP" className="cursor-pointer">On Trip</SelectItem>
+                <SelectItem value="IN_SHOP" className="cursor-pointer">In Shop</SelectItem>
+                <SelectItem value="RETIRED" className="cursor-pointer">Retired</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8 cursor-pointer text-muted-foreground hover:text-foreground border-border bg-transparent hover:bg-muted/50"
+              title="Reset Filters"
+              onClick={() => {
+                setFilter("q", "");
+                setFilter("type", "");
+                setFilter("status", "");
+              }}
+            >
+              <SlidersHorizontal className="size-4" />
+            </Button>
+          </div>
+        </div>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="border border-border bg-card">
+      <motion.div variants={itemVariants}>
         <DataTable
           columns={columns}
           data={items}
           isLoading={loading}
           emptyMessage="No vehicles registered yet. Register a new vehicle to get started."
           getRowKey={(row) => row.id}
+          entityName="vehicles"
         />
       </motion.div>
 

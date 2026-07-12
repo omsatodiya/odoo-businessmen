@@ -48,10 +48,10 @@ export function UserMenu({ user }: { user: { name: string; role: Role } }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-muted">
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-muted cursor-pointer">
         <span className="hidden text-sm font-medium text-foreground sm:inline">{user.name}</span>
         <Avatar size="sm">
-          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+          <AvatarFallback className="bg-muted text-xs font-semibold text-foreground border border-border">
             {initials(user.name)}
           </AvatarFallback>
         </Avatar>
