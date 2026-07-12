@@ -15,6 +15,7 @@ import {
   TableFetchOverlay,
   type TableFetchTrigger,
 } from "@/components/tables/table-fetch-overlay"
+import { Button } from "@/components/ui/button"
 
 export interface ColumnDef<T> {
   header: React.ReactNode | string
@@ -30,6 +31,7 @@ interface DataTableProps<T> {
   loadingTrigger?: TableFetchTrigger | null
   emptyMessage?: string
   getRowKey?: (row: T, index: number) => string
+  entityName?: string
 }
 
 export function DataTable<T>({
@@ -39,6 +41,7 @@ export function DataTable<T>({
   loadingTrigger,
   emptyMessage = "No results found.",
   getRowKey,
+  entityName = "items",
 }: DataTableProps<T>) {
   const showOverlay = isLoading && data.length > 0
   const showInitialLoader = isLoading && data.length === 0
@@ -119,6 +122,29 @@ export function DataTable<T>({
           </Table>
         </div>
       </motion.div>
+      <div className="flex items-center justify-between border-t border-border bg-card/50 px-4 py-2.5 select-none">
+        <span className="text-xs text-muted-foreground">
+          Showing {data.length} of {data.length} {entityName}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="h-7 px-3 text-xs font-medium cursor-not-allowed text-muted-foreground/40 border-border bg-transparent"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="h-7 px-3 text-xs font-medium cursor-not-allowed text-muted-foreground/40 border-border bg-transparent"
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
