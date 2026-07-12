@@ -33,6 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data: {
         name: result.data.name,
+        email: result.data.email,
         licenseNo: result.data.licenseNo,
         licenseCategory: result.data.licenseCategory,
         licenseExpiry: result.data.licenseExpiry,

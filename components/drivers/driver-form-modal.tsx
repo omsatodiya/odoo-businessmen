@@ -38,6 +38,7 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
     driver ? new Date(driver.licenseExpiry).toISOString().split("T")[0] : ""
   );
   const [contact, setContact] = useState(driver?.contact ?? "");
+  const [email, setEmail] = useState(driver?.email ?? "");
   const [safetyScore, setSafetyScore] = useState(driver?.safetyScore ?? 100);
   const [status, setStatus] = useState<DriverStatus>(driver?.status ?? "AVAILABLE");
 
@@ -50,6 +51,9 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
     if (!licenseNo.trim()) newErrors.licenseNo = "License number is required";
     if (!licenseExpiry) newErrors.licenseExpiry = "License expiry date is required";
     if (!contact.trim()) newErrors.contact = "Contact is required";
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Invalid email format";
+    }
     if (safetyScore < 0 || safetyScore > 100) newErrors.safetyScore = "Safety score must be between 0 and 100";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -62,6 +66,7 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
     setIsSubmitting(true);
     const payload = {
       name: name.trim(),
+      email: email.trim() || undefined,
       licenseNo: licenseNo.trim(),
       licenseCategory,
       licenseExpiry: new Date(licenseExpiry),
@@ -183,25 +188,38 @@ export function DriverFormModal({ open, onOpenChange, driver }: DriverFormModalP
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={status}
-              onValueChange={(val) => setStatus(val as DriverStatus)}
-            >
-              <SelectTrigger id="status" className="h-9">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AVAILABLE">Available</SelectItem>
-                <SelectItem value="OFF_DUTY">Off Duty</SelectItem>
-                <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                {/* ON_TRIP option is disabled or only visible if already set */}
-                <SelectItem value="ON_TRIP" disabled={driver?.status !== "ON_TRIP"}>
-                  On Trip
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. driver@transitops.in"
+              className="h-9"
+            />
+            {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
           </div>
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={status}
+            onValueChange={(val) => setStatus(val as DriverStatus)}
+          >
+            <SelectTrigger id="status" className="h-9 cursor-pointer">
+              <SelectValue placeholder="Select Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AVAILABLE" className="cursor-pointer">Available</SelectItem>
+              <SelectItem value="OFF_DUTY" className="cursor-pointer">Off Duty</SelectItem>
+              <SelectItem value="SUSPENDED" className="cursor-pointer">Suspended</SelectItem>
+              {/* ON_TRIP option is disabled or only visible if already set */}
+              <SelectItem value="ON_TRIP" className="cursor-pointer" disabled={driver?.status !== "ON_TRIP"}>
+                On Trip
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </FormModal>

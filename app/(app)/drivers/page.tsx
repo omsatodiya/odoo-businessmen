@@ -9,7 +9,8 @@ import {
   Plus, 
   Search, 
   SlidersHorizontal, 
-  TriangleAlert 
+  TriangleAlert,
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,10 +51,31 @@ export default function DriversPage() {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editDriver, setEditDriver] = useState<DriverWithCompletion | null>(null);
+  const [sendingReminders, setSendingReminders] = useState(false);
   
   // Pagination state (client-side)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const handleSendReminders = async () => {
+    setSendingReminders(true);
+    try {
+      const res = await window.fetch("/api/cron/reminders", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to send reminders");
+      const json = await res.json();
+      
+      const count = json.data?.remindersSent?.length || 0;
+      if (count > 0) {
+        toast.success(`Scan completed. Successfully sent ${count} license expiry reminders.`);
+      } else {
+        toast.info("Scan completed. No driver licenses expire in exactly 3 or 7 days today.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An error occurred while sending reminders");
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
   // Sync selected driver state when items fetch completes
   const selectedDriver = useMemo(
@@ -96,15 +118,31 @@ export default function DriversPage() {
         title="Drivers"
         description="Manage your driver database and safety profiles."
         actions={
-          <Button
-            onClick={() => {
-              setEditDriver(null);
-              setModalOpen(true);
-            }}
-            className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5"
-          >
-            <Plus className="size-4 stroke-[3]" /> Add Driver
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleSendReminders}
+              disabled={sendingReminders || loading}
+              variant="outline"
+              className="h-9 px-4 border border-border shadow-sm flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+              title="Run manual scanner for driver license expirations"
+            >
+              {sendingReminders ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Mail className="size-4" />
+              )}
+              Send Reminders
+            </Button>
+            <Button
+              onClick={() => {
+                setEditDriver(null);
+                setModalOpen(true);
+              }}
+              className="bg-foreground hover:bg-foreground/90 text-background font-semibold rounded-md h-9 px-4 border border-border shadow-sm flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+            >
+              <Plus className="size-4 stroke-[3]" /> Add Driver
+            </Button>
+          </div>
         }
       />
 
